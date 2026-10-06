@@ -4,6 +4,7 @@ import { initHeader } from './js/core/header.js';
 import { initMenu } from './js/core/menu.js';
 import { initCursor } from './js/core/cursor.js';
 import { initMagnetic } from './js/core/magnetic.js';
+import { initPhotos } from './js/core/photos.js';
 import { runPreloader } from './js/sections/preloader.js';
 import { heroIntro, heroScroll } from './js/sections/hero.js';
 import { initMarquee } from './js/sections/marquee.js';
@@ -32,6 +33,7 @@ async function boot() {
   initCursor();
   initMagnetic();
   initMarquee();
+  initPhotos();
 
   document.querySelectorAll('[data-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });
 

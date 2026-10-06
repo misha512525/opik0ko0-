@@ -198,7 +198,7 @@
     <!-- ============ 2. ПЕРЕЗАГРУЗКА (manifesto, dark, pinned) ============ -->
     <section class="manifesto" id="about" data-theme="dark" aria-labelledby="manifesto-title">
       <div class="manifesto__pin">
-        <div class="manifesto__photo photo" aria-hidden="true">
+        <div class="manifesto__photo photo" data-photo="manifesto" aria-hidden="true">
           <picture>
             <source type="image/avif" srcset="/img/manifesto-800.avif 800w, /img/manifesto-1448.avif 1448w" sizes="100vw" />
             <source type="image/webp" srcset="/img/manifesto-800.webp 800w, /img/manifesto-1448.webp 1448w" sizes="100vw" />
@@ -242,7 +242,7 @@
           <li class="stack__item">
             <article class="card card--latte">
               <div class="card__blinds" aria-hidden="true"></div>
-              <figure class="card__photo photo">
+              <figure class="card__photo photo" data-photo="card-support">
                 <picture>
                   <source type="image/avif" srcset="/img/card-support-600.avif 600w, /img/card-support-1000.avif 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
                   <source type="image/webp" srcset="/img/card-support-600.webp 600w, /img/card-support-1000.webp 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
@@ -257,7 +257,7 @@
           <li class="stack__item">
             <article class="card card--rose">
               <div class="card__blinds" aria-hidden="true"></div>
-              <figure class="card__photo photo">
+              <figure class="card__photo photo" data-photo="card-dialog">
                 <picture>
                   <source type="image/avif" srcset="/img/card-dialog-600.avif 600w, /img/card-dialog-1000.avif 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
                   <source type="image/webp" srcset="/img/card-dialog-600.webp 600w, /img/card-dialog-1000.webp 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
@@ -272,7 +272,7 @@
           <li class="stack__item">
             <article class="card card--espresso">
               <div class="card__blinds" aria-hidden="true"></div>
-              <figure class="card__photo photo">
+              <figure class="card__photo photo" data-photo="card-warmth">
                 <picture>
                   <source type="image/avif" srcset="/img/card-warmth-600.avif 600w, /img/card-warmth-1000.avif 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
                   <source type="image/webp" srcset="/img/card-warmth-600.webp 600w, /img/card-warmth-1000.webp 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
@@ -297,7 +297,7 @@
             <h2 class="topics__title display" id="topics-title" data-split-lines>Когда в&nbsp;отношениях <em>стало сложно</em></h2>
             <div class="window" aria-hidden="true">
               <div class="window__arch">
-                <div class="window__photo photo">
+                <div class="window__photo photo" data-photo="topics">
                   <picture>
                     <source type="image/avif" srcset="/img/topics-480.avif 480w, /img/topics-800.avif 800w" sizes="(min-width: 1024px) 340px, 80vw" />
                     <source type="image/webp" srcset="/img/topics-480.webp 480w, /img/topics-800.webp 800w" sizes="(min-width: 1024px) 340px, 80vw" />
@@ -366,7 +366,7 @@
         </div>
 
         <div class="channel__visual">
-          <figure class="channel__photo photo">
+          <figure class="channel__photo photo" data-photo="channel">
             <picture>
               <source type="image/avif" srcset="/img/channel-600.avif 600w, /img/channel-1000.avif 1000w" sizes="(min-width: 1024px) 40vw, 86vw" />
               <source type="image/webp" srcset="/img/channel-600.webp 600w, /img/channel-1000.webp 1000w" sizes="(min-width: 1024px) 40vw, 86vw" />
@@ -444,7 +444,7 @@
 
     <!-- ============ 7. ФИНАЛ ============ -->
     <section class="finale" data-theme="dark" aria-labelledby="finale-title">
-      <div class="finale__photo photo" aria-hidden="true">
+      <div class="finale__photo photo" data-photo="finale" aria-hidden="true">
         <picture>
           <source type="image/avif" srcset="/img/finale-800.avif 800w, /img/finale-1448.avif 1448w" sizes="100vw" />
           <source type="image/webp" srcset="/img/finale-800.webp 800w, /img/finale-1448.webp 1448w" sizes="100vw" />

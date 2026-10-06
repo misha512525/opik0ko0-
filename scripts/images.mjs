@@ -1,7 +1,7 @@
 // Генерация адаптивных изображений из assets/sofia.jpg → public/img
 // Запуск: npm run images
 import sharp from 'sharp';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const SRC = 'assets/sofia.jpg';
 const OUT = 'public/img';
@@ -42,6 +42,18 @@ for (const [name, o] of Object.entries(PHOTOS)) {
     await base.clone().jpeg({ quality: 76, mozjpeg: true }).toFile(`${OUT}/${name}-${w}.jpg`);
   }
 }
+
+// LQIP: крошечные размытые превью (~0.5 КБ) — показываются, пока грузится фото
+let lqipCss = '/* Сгенерировано scripts/images.mjs — не редактировать вручную */\n';
+for (const [name, o] of Object.entries(PHOTOS)) {
+  const buf = await sharp(`assets/photos/${name}.jpg`)
+    .resize({ width: 24 })
+    .modulate({ saturation: o.saturation, hue: o.hue })
+    .webp({ quality: 40 })
+    .toBuffer();
+  lqipCss += `[data-photo='${name}'] { --lqip: url(data:image/webp;base64,${buf.toString('base64')}); }\n`;
+}
+await writeFile('src/styles/lqip.css', lqipCss);
 
 // PNG-иконки из SVG-фавикона
 const svg = await readFile('public/favicon.svg');
