@@ -198,6 +198,14 @@
     <!-- ============ 2. ПЕРЕЗАГРУЗКА (manifesto, dark, pinned) ============ -->
     <section class="manifesto" id="about" data-theme="dark" aria-labelledby="manifesto-title">
       <div class="manifesto__pin">
+        <div class="manifesto__photo photo" aria-hidden="true">
+          <picture>
+            <source type="image/avif" srcset="/img/manifesto-800.avif 800w, /img/manifesto-1448.avif 1448w" sizes="100vw" />
+            <source type="image/webp" srcset="/img/manifesto-800.webp 800w, /img/manifesto-1448.webp 1448w" sizes="100vw" />
+            <img class="photo__img" src="/img/manifesto-1448.jpg" width="1448" height="1086" alt="" loading="lazy" decoding="async" />
+          </picture>
+          <div class="manifesto__shade"></div>
+        </div>
         <div class="manifesto__blinds" aria-hidden="true"><div class="light-blinds light-blinds--dark"></div></div>
         <div class="container manifesto__inner">
           <p class="eyebrow eyebrow--light"><span class="eyebrow__line" aria-hidden="true"></span>О себе · история канала</p>
@@ -234,6 +242,13 @@
           <li class="stack__item">
             <article class="card card--latte">
               <div class="card__blinds" aria-hidden="true"></div>
+              <figure class="card__photo photo">
+                <picture>
+                  <source type="image/avif" srcset="/img/card-support-600.avif 600w, /img/card-support-1000.avif 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
+                  <source type="image/webp" srcset="/img/card-support-600.webp 600w, /img/card-support-1000.webp 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
+                  <img class="photo__img" src="/img/card-support-1000.jpg" width="1448" height="1086" alt="Чашка чая, раскрытый чистый блокнот и ручка на деревянном столе в полосах солнечного света" loading="lazy" decoding="async" />
+                </picture>
+              </figure>
               <span class="card__num">01</span>
               <h3 class="card__title display">Опора <em>в&nbsp;себе</em></h3>
               <p class="card__text">Прежде чем решать, как быть с&nbsp;отношениями, важно услышать себя. Ищем внутреннюю опору&nbsp;— чтобы решения были вашими, а&nbsp;не&nbsp;продиктованными обидой или страхом.</p>
@@ -242,6 +257,13 @@
           <li class="stack__item">
             <article class="card card--rose">
               <div class="card__blinds" aria-hidden="true"></div>
+              <figure class="card__photo photo">
+                <picture>
+                  <source type="image/avif" srcset="/img/card-dialog-600.avif 600w, /img/card-dialog-1000.avif 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
+                  <source type="image/webp" srcset="/img/card-dialog-600.webp 600w, /img/card-dialog-1000.webp 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
+                  <img class="photo__img" src="/img/card-dialog-1000.jpg" width="1448" height="1086" alt="Две чашки чая друг напротив друга на столе, рядом розовая льняная ткань" loading="lazy" decoding="async" />
+                </picture>
+              </figure>
               <span class="card__num">02</span>
               <h3 class="card__title display">Диалог, <em>где слышат</em></h3>
               <p class="card__text">Учимся говорить так, чтобы партнёр мог услышать, и&nbsp;слушать так, чтобы ему хотелось говорить. Без обвинений и&nbsp;без молчаливых войн.</p>
@@ -250,6 +272,13 @@
           <li class="stack__item">
             <article class="card card--espresso">
               <div class="card__blinds" aria-hidden="true"></div>
+              <figure class="card__photo photo">
+                <picture>
+                  <source type="image/avif" srcset="/img/card-warmth-600.avif 600w, /img/card-warmth-1000.avif 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
+                  <source type="image/webp" srcset="/img/card-warmth-600.webp 600w, /img/card-warmth-1000.webp 1000w" sizes="(min-width: 1024px) 42vw, 86vw" />
+                  <img class="photo__img" src="/img/card-warmth-1000.jpg" width="1448" height="1086" alt="Руки двух людей вместе держат одну тёплую кружку" loading="lazy" decoding="async" />
+                </picture>
+              </figure>
               <span class="card__num">03</span>
               <h3 class="card__title display">Тепло <em>вместо войны</em></h3>
               <p class="card__text">Не&nbsp;ищем виноватых и&nbsp;не&nbsp;выбираем, кто прав. Бережно возвращаем в&nbsp;отношения то, ради чего вы&nbsp;когда-то были вместе,&nbsp;— тепло.</p>
@@ -268,7 +297,14 @@
             <h2 class="topics__title display" id="topics-title" data-split-lines>Когда в&nbsp;отношениях <em>стало сложно</em></h2>
             <div class="window" aria-hidden="true">
               <div class="window__arch">
-                <div class="window__light"><div class="light-blinds"></div></div>
+                <div class="window__photo photo">
+                  <picture>
+                    <source type="image/avif" srcset="/img/topics-480.avif 480w, /img/topics-800.avif 800w" sizes="(min-width: 1024px) 340px, 80vw" />
+                    <source type="image/webp" srcset="/img/topics-480.webp 480w, /img/topics-800.webp 800w" sizes="(min-width: 1024px) 340px, 80vw" />
+                    <img class="photo__img" src="/img/topics-800.jpg" width="1122" height="1402" alt="" loading="lazy" decoding="async" />
+                  </picture>
+                </div>
+                <div class="window__tint"></div>
                 <span class="window__num" data-window-num>01</span>
               </div>
               <p class="window__caption" data-window-caption>Обиды</p>
@@ -277,27 +313,27 @@
         </div>
 
         <ul class="topics__list">
-          <li class="topic" data-topic="0" data-bg="#E8D9C3" data-tint="#B8704F" data-angle="-14">
+          <li class="topic" data-topic="0" data-bg="#E8D9C3" data-tint="#B8704F">
             <span class="topic__num">01</span>
             <h3 class="topic__name display">Обиды</h3>
             <p class="topic__text">Когда невысказанного накопилось столько, что ранит любое слово. Разбираемся, что стоит за&nbsp;обидой и&nbsp;что с&nbsp;ней делать дальше.</p>
           </li>
-          <li class="topic" data-topic="1" data-bg="#EBD3C7" data-tint="#D8A99A" data-angle="-6">
+          <li class="topic" data-topic="1" data-bg="#EBD3C7" data-tint="#D8A99A">
             <span class="topic__num">02</span>
             <h3 class="topic__name display"><em>Чувства</em></h3>
             <p class="topic__text">Любовь, злость, вина, растерянность&nbsp;— всё сразу. Распутываем этот клубок, чтобы стало понятнее, что с&nbsp;вами происходит.</p>
           </li>
-          <li class="topic" data-topic="2" data-bg="#E6CDB0" data-tint="#C9A66B" data-angle="-20">
+          <li class="topic" data-topic="2" data-bg="#E6CDB0" data-tint="#C9A66B">
             <span class="topic__num">03</span>
             <h3 class="topic__name display">Тепло в&nbsp;паре</h3>
             <p class="topic__text">Вроде вместе, но&nbsp;будто рядом чужой человек. Ищем, куда ушла близость, и&nbsp;как вернуть тепло в&nbsp;отношения.</p>
           </li>
-          <li class="topic" data-topic="3" data-bg="#DEDDCB" data-tint="#7C826A" data-angle="-10">
+          <li class="topic" data-topic="3" data-bg="#DEDDCB" data-tint="#7C826A">
             <span class="topic__num">04</span>
             <h3 class="topic__name display"><em>Диалог</em></h3>
             <p class="topic__text">Разговоры превращаются в&nbsp;спор или в&nbsp;тишину. Учимся говорить и&nbsp;слышать&nbsp;— без войны и&nbsp;без капитуляции.</p>
           </li>
-          <li class="topic" data-topic="4" data-bg="#F1E6D6" data-tint="#4A342A" data-angle="-16">
+          <li class="topic" data-topic="4" data-bg="#F1E6D6" data-tint="#4A342A">
             <span class="topic__num">05</span>
             <h3 class="topic__name display">Опора в&nbsp;себе</h3>
             <p class="topic__text">Чтобы понять, как быть с&nbsp;отношениями, сначала нужно услышать себя. Возвращаем внутреннюю устойчивость.</p>
@@ -329,25 +365,34 @@
           </a>
         </div>
 
-        <a class="tg-card" href="https://t.me/sofiapsiho" target="_blank" rel="noopener" data-cursor="открыть" data-tilt>
-          <div class="tg-card__blinds" aria-hidden="true"></div>
-          <div class="tg-card__head">
+        <div class="channel__visual">
+          <figure class="channel__photo photo">
             <picture>
-              <source type="image/webp" srcset="/img/sofia-avatar.webp" />
-              <img class="tg-card__avatar" src="/img/sofia-avatar.jpg" width="160" height="160" alt="" loading="lazy" decoding="async" />
+              <source type="image/avif" srcset="/img/channel-600.avif 600w, /img/channel-1000.avif 1000w" sizes="(min-width: 1024px) 40vw, 86vw" />
+              <source type="image/webp" srcset="/img/channel-600.webp 600w, /img/channel-1000.webp 1000w" sizes="(min-width: 1024px) 40vw, 86vw" />
+              <img class="photo__img" src="/img/channel-1000.jpg" width="1448" height="1086" alt="Уютное кресло с терракотовым пледом, рядом столик с чашкой чая и телефоном, вечерний свет лампы" loading="lazy" decoding="async" />
             </picture>
-            <div>
-              <p class="tg-card__name">София. А — Психология отношений</p>
-              <p class="tg-card__handle">t.me/sofiapsiho</p>
+          </figure>
+          <a class="tg-card" href="https://t.me/sofiapsiho" target="_blank" rel="noopener" data-cursor="открыть" data-tilt>
+            <div class="tg-card__blinds" aria-hidden="true"></div>
+            <div class="tg-card__head">
+              <picture>
+                <source type="image/webp" srcset="/img/sofia-avatar.webp" />
+                <img class="tg-card__avatar" src="/img/sofia-avatar.jpg" width="160" height="160" alt="" loading="lazy" decoding="async" />
+              </picture>
+              <div>
+                <p class="tg-card__name">София. А — Психология отношений</p>
+                <p class="tg-card__handle">t.me/sofiapsiho</p>
+              </div>
             </div>
-          </div>
-          <div class="tg-card__msg">
-            <p class="tg-card__tag">#перезагрузка</p>
-            <p class="tg-card__quote display">Здесь снова будет <em>тепло</em>, честно и&nbsp;профессионально.</p>
-            <p class="tg-card__sign">Ваша София. А</p>
-          </div>
-          <span class="tg-card__cta">Открыть в&nbsp;Telegram <span aria-hidden="true">↗</span></span>
-        </a>
+            <div class="tg-card__msg">
+              <p class="tg-card__tag">#перезагрузка</p>
+              <p class="tg-card__quote display">Здесь снова будет <em>тепло</em>, честно и&nbsp;профессионально.</p>
+              <p class="tg-card__sign">Ваша София. А</p>
+            </div>
+            <span class="tg-card__cta">Открыть в&nbsp;Telegram <span aria-hidden="true">↗</span></span>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -399,6 +444,14 @@
 
     <!-- ============ 7. ФИНАЛ ============ -->
     <section class="finale" data-theme="dark" aria-labelledby="finale-title">
+      <div class="finale__photo photo" aria-hidden="true">
+        <picture>
+          <source type="image/avif" srcset="/img/finale-800.avif 800w, /img/finale-1448.avif 1448w" sizes="100vw" />
+          <source type="image/webp" srcset="/img/finale-800.webp 800w, /img/finale-1448.webp 1448w" sizes="100vw" />
+          <img class="photo__img" src="/img/finale-1448.jpg" width="1448" height="1086" alt="" loading="lazy" decoding="async" />
+        </picture>
+        <div class="finale__shade"></div>
+      </div>
       <div class="finale__blinds" aria-hidden="true"><div class="light-blinds light-blinds--dark"></div></div>
       <div class="container finale__inner">
         <p class="eyebrow eyebrow--light"><span class="eyebrow__line" aria-hidden="true"></span>Перезагрузка</p>
@@ -425,7 +478,7 @@
         <li><a href="#ads">Реклама</a></li>
         <li><a href="#top">Наверх</a></li>
       </ul>
-      <p class="footer__note">Материалы сайта носят информационный характер и&nbsp;не&nbsp;заменяют очную медицинскую помощь.</p>
+      <p class="footer__note">Материалы сайта носят информационный характер и&nbsp;не&nbsp;заменяют очную медицинскую помощь. Атмосферные иллюстрации созданы с&nbsp;помощью нейросети.</p>
       <p class="footer__copy">© <span data-year>2026</span> София Ахлестина <span aria-hidden="true">❤️‍🩹</span></p>
     </div>
   </footer>

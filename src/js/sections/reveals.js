@@ -22,6 +22,16 @@ export function initReveals() {
       });
     });
 
+    // Параллакс фото внутри рамок (двигается только img → transform)
+    document.querySelectorAll('.card__photo, .window__photo, .channel__photo, .finale__photo').forEach((frame) => {
+      const img = frame.querySelector('.photo__img');
+      gsap.fromTo(img, { yPercent: -5 }, {
+        yPercent: 5,
+        ease: 'none',
+        scrollTrigger: { trigger: frame, start: 'top bottom', end: 'bottom top', scrub: true },
+      });
+    });
+
     ScrollTrigger.batch('[data-reveal]', {
       start: 'top 90%',
       once: true,

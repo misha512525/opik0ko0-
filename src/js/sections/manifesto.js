@@ -13,6 +13,8 @@ export function initManifesto() {
   const reboot = section.querySelector('[data-reboot]');
   const label = section.querySelector('.manifesto__reboot-label');
   const blinds = section.querySelector('.light-blinds');
+  const photo = section.querySelector('.manifesto__photo .photo__img');
+  const shade = section.querySelector('.manifesto__shade');
 
   const mm = gsap.matchMedia();
   mm.add({ desktop: MQ.desktop, mobile: MQ.mobile, motion: MQ.motion }, (ctx) => {
@@ -74,7 +76,11 @@ export function initManifesto() {
       .to(glow, { opacity: 0.35, duration: 0.1 })
       .to(glow, { opacity: 1, duration: 0.3 })
       .to(blinds, { yPercent: 22, duration: 1.1 }, '<-0.6')
+      // свет в комнате «возвращается» вместе со словом
+      .to(shade, { opacity: 0.55, duration: 1.2, ease: 'power1.inOut' }, '<')
       .to({}, { duration: 0.4 });
+    // медленный наезд камеры на комнату на всём протяжении pin
+    tl.fromTo(photo, { scale: 1.16 }, { scale: 1, duration: tl.duration(), ease: 'none' }, 0);
 
     return () => {
       glow.remove();

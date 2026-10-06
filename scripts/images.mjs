@@ -22,6 +22,27 @@ const avatar = sharp(SRC).grayscale().extract({ left: 300, top: 120, width: 400,
 await avatar.clone().webp({ quality: 78 }).toFile(`${OUT}/sofia-avatar.webp`);
 await avatar.clone().jpeg({ quality: 80, mozjpeg: true }).toFile(`${OUT}/sofia-avatar.jpg`);
 
+// Атмосферные кадры (assets/photos) — приглушаем «янтарь», чтобы серия сидела в палитре
+const PHOTOS = {
+  manifesto: { widths: [800, 1448], saturation: 0.8, hue: -4 },
+  finale: { widths: [800, 1448], saturation: 0.82, hue: -4 },
+  'card-support': { widths: [600, 1000], saturation: 0.86, hue: -3 },
+  'card-dialog': { widths: [600, 1000], saturation: 0.88, hue: -2 },
+  'card-warmth': { widths: [600, 1000], saturation: 0.85, hue: -3 },
+  topics: { widths: [480, 800], saturation: 0.8, hue: -4 },
+  channel: { widths: [600, 1000], saturation: 0.78, hue: -5 },
+};
+for (const [name, o] of Object.entries(PHOTOS)) {
+  for (const w of o.widths) {
+    const base = sharp(`assets/photos/${name}.jpg`)
+      .resize({ width: w, withoutEnlargement: true })
+      .modulate({ saturation: o.saturation, hue: o.hue });
+    await base.clone().avif({ quality: 50, effort: 6 }).toFile(`${OUT}/${name}-${w}.avif`);
+    await base.clone().webp({ quality: 72 }).toFile(`${OUT}/${name}-${w}.webp`);
+    await base.clone().jpeg({ quality: 76, mozjpeg: true }).toFile(`${OUT}/${name}-${w}.jpg`);
+  }
+}
+
 // PNG-иконки из SVG-фавикона
 const svg = await readFile('public/favicon.svg');
 await sharp(svg, { density: 600 }).resize(180, 180).flatten({ background: '#F6EEE3' }).png().toFile('public/apple-touch-icon.png');

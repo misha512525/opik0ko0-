@@ -7,7 +7,7 @@ export function initTopics() {
   const list = section.querySelector('.topics__list');
   const topics = [...section.querySelectorAll('.topic')];
   const windowArch = section.querySelector('.window__arch');
-  const windowBlinds = section.querySelector('.window__light .light-blinds');
+  const windowTint = section.querySelector('.window__tint');
   const num = section.querySelector('[data-window-num]');
   const caption = section.querySelector('[data-window-caption]');
   let current = -1;
@@ -23,8 +23,8 @@ export function initTopics() {
 
     gsap.to(section, { backgroundColor: t.dataset.bg, duration: reduce ? 0.2 : 0.9, ease: 'power2.out', overwrite: 'auto' });
     if (!windowArch) return;
-    gsap.to(windowArch, { backgroundColor: t.dataset.tint, duration: reduce ? 0.2 : 0.9, ease: 'power2.out', overwrite: 'auto' });
-    if (windowBlinds) gsap.to(windowBlinds, { rotation: Number(t.dataset.angle), yPercent: i * 3, duration: reduce ? 0 : 1.2, ease: 'expo.out', overwrite: 'auto' });
+    // одна и та же комната, но тёплый тон «света» меняется вместе с темой
+    gsap.to(windowTint, { backgroundColor: t.dataset.tint, duration: reduce ? 0.2 : 0.9, ease: 'power2.out', overwrite: 'auto' });
 
     const label = t.querySelector('.topic__name').textContent.trim();
     if (reduce) {
