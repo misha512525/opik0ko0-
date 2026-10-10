@@ -9,151 +9,111 @@ import Rich from '../ui/Rich.astro';
 import Button from '../ui/Button.astro';
 ---
 
-<section class="hero paper-grid" id="top" aria-labelledby="hero-title" data-hero>
-  <span class="hero__margin" aria-hidden="true"></span>
-
-  <div class="container hero__grid">
-    <div class="hero__text">
-      <div class="hero__title-wrap">
-        <h1 id="hero-title" class="hero__title" data-hero-title><Rich text={HERO.title} /></h1>
-
-        <!-- Оценка на полях: «100», обведённое красной ручкой -->
-        <svg class="hero__grade" viewBox="0 0 170 110" aria-hidden="true" data-hero-grade>
-          <g class="pen pen--red" stroke-width="4.2">
-            <path d="M38 40 C42 36 47 31 52 26 C51 44 50 62 49 82"></path>
-            <path d="M84 30 C70 30 64 52 66 66 C68 82 82 86 90 72 C97 58 97 32 84 30"></path>
-            <path d="M122 30 C108 30 102 52 104 66 C106 82 120 86 128 72 C135 58 135 32 122 30"></path>
-            <path
-              d="M30 62 C24 32 66 12 108 12 C146 12 166 34 160 60 C154 88 110 100 74 98 C40 96 18 84 22 62 C24 50 34 40 46 34"
-              stroke-width="3.2"></path>
-          </g>
-        </svg>
-      </div>
-
-      <p class="hero__lead">
-        <span class="hero__avatar" aria-hidden="true">
-          <Picture
-            src={annaAvatar}
-            alt=""
-            widths={[96]}
-            sizes="48px"
-            formats={['avif', 'webp']}
-            loading="eager"
-            class="hero__avatar-img"
-          />
-        </span>
-        <span data-hero-fade>{typo(HERO.lead)}</span>
-      </p>
-
-      <div class="hero__ctas" data-hero-fade>
-        <Button href={tg()} icon="tg" goal="tg_hero">{HERO.primary}</Button>
-        <Button href="#results" variant="ghost" icon="down">{HERO.secondary}</Button>
-      </div>
-
-      <ul class="hero__trust" data-hero-fade>
-        {
-          HERO.trust.map((t) => (
-            <li>
-              <svg class="pen pen--green" viewBox="0 0 28 24" width="18" height="16" aria-hidden="true">
-                <path d="M3 13 C6 15 9 18 11 21 C15 12 20 7 26 3" stroke-width="2.6" />
-              </svg>
-              {typo(t)}
-            </li>
-          ))
-        }
-      </ul>
+<section class="hero" id="top" aria-labelledby="hero-title" data-hero>
+  <div class="hero__text">
+    <div class="hero__title-wrap">
+      <h1 id="hero-title" class="hero__title" data-hero-title><Rich text={HERO.title} /></h1>
+      <!-- Оценка на полях: «100», обведённое красной ручкой -->
+      <svg class="hero__grade" viewBox="0 0 170 110" aria-hidden="true" data-hero-grade>
+        <g class="pen pen--red" stroke-width="4.2">
+          <path d="M38 40 C42 36 47 31 52 26 C51 44 50 62 49 82"></path>
+          <path d="M84 30 C70 30 64 52 66 66 C68 82 82 86 90 72 C97 58 97 32 84 30"></path>
+          <path d="M122 30 C108 30 102 52 104 66 C106 82 120 86 128 72 C135 58 135 32 122 30"></path>
+          <path
+            d="M30 62 C24 32 66 12 108 12 C146 12 166 34 160 60 C154 88 110 100 74 98 C40 96 18 84 22 62 C24 50 34 40 46 34"
+            stroke-width="3.2"></path>
+        </g>
+      </svg>
     </div>
 
-    <figure class="hero__visual" data-hero-visual>
-      <div class="hero__arch" data-hero-arch>
-        <div class="hero__photo" data-hero-photo>
-          <Picture
-            src={anna}
-            alt={plain(HERO.photoAlt)}
-            widths={[440, 660, 888]}
-            sizes="(min-width: 1024px) 36vw, (min-width: 640px) 60vw, 88vw"
-            formats={['avif', 'webp']}
-            loading="eager"
-            fetchpriority="high"
-            class="hero__img"
-          />
-        </div>
-      </div>
-      <figcaption class="hero__caption">
-        <span>{typo(HERO.stickers[0])}</span>
-        <span>{typo(HERO.stickers[1])}</span>
-      </figcaption>
-    </figure>
+    <p class="hero__lead">
+      <span class="hero__avatar" aria-hidden="true">
+        <Picture
+          src={annaAvatar}
+          alt=""
+          widths={[96]}
+          sizes="48px"
+          formats={['avif', 'webp']}
+          loading="eager"
+        />
+      </span>
+      <span data-hero-fade>{typo(HERO.lead)}</span>
+    </p>
+
+    <div class="hero__ctas" data-hero-fade>
+      <Button href={tg()} icon="tg" goal="tg_hero">{HERO.primary}</Button>
+      <Button href="#results" variant="ghost" icon="down">{HERO.secondary}</Button>
+    </div>
+
+    <ul class="hero__trust" data-hero-fade>
+      {
+        HERO.trust.map((t) => (
+          <li>
+            <svg class="pen pen--green" viewBox="0 0 28 24" width="18" height="16" aria-hidden="true">
+              <path d="M3 13 C6 15 9 18 11 21 C15 12 20 7 26 3" stroke-width="2.6" />
+            </svg>
+            {typo(t)}
+          </li>
+        ))
+      }
+    </ul>
   </div>
+
+  <figure class="hero__visual">
+    <div class="hero__photo" data-hero-photo>
+      <Picture
+        src={anna}
+        alt={plain(HERO.photoAlt)}
+        widths={[440, 660, 888]}
+        sizes="(min-width: 1024px) 46vw, 100vw"
+        formats={['avif', 'webp']}
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+    <figcaption class="hero__caption">
+      <span>{typo(HERO.stickers[0])}</span>
+      <span>{typo(HERO.stickers[1])}</span>
+    </figcaption>
+  </figure>
 </section>
 
 <style>
+  /* Разворот журнала: слева текст на чистом фоне, справа фото в полную высоту до края экрана */
   .hero {
     position: relative;
-    isolation: isolate;
-    overflow: clip;
-    min-height: 100svh;
-    padding-top: calc(var(--nav-h) + 48px);
-    padding-bottom: clamp(56px, 8vw, 96px);
-    background-color: var(--color-sky-50);
-  }
-  /* мягкое затухание клетки к низу */
-  .hero::after {
-    content: '';
-    position: absolute;
-    inset: auto 0 0 0;
-    height: 30%;
-    background: linear-gradient(transparent, var(--color-sky-50));
-    z-index: -1;
-    pointer-events: none;
-  }
-
-  /* Поля тетради */
-  .hero__margin {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: max(8px, calc((100vw - var(--maxw)) / 2 - 28px));
-    width: 1.5px;
-    background: rgba(217, 71, 63, 0.28);
-    z-index: -1;
-  }
-
-  /* ---------- Сетка ---------- */
-  .hero__grid {
-    position: relative;
     display: grid;
-    gap: 48px;
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr);
+    background: var(--color-sky-50);
   }
   .hero__text {
     position: relative;
-    z-index: 2;
+    z-index: 1;
+    padding: calc(var(--nav-h) + 52px) var(--gutter) 48px;
   }
   .hero__title-wrap {
     position: relative;
   }
-  :global(.motion-ok) .hero__title {
-    visibility: hidden;
-  }
   .hero__title {
+    margin: 0;
+    max-width: 11ch;
     font-size: var(--fs-hero);
+    font-weight: 500;
     line-height: 0.96;
     letter-spacing: -0.035em;
-    font-weight: 500;
-    max-width: 11ch;
-    margin: 0;
+  }
+  :global(.motion-ok) .hero__title {
+    visibility: hidden;
   }
   .hero__title :global(em) {
     color: var(--color-blue-500);
     font-weight: 500;
   }
-  /* Позиция задаётся из JS по слову «сто» (--gx/--gy); здесь — фолбэк без JS */
+  /* Позиция задаётся из JS по строке со словом «сто» (--gx/--gy) */
   .hero__grade {
     position: absolute;
     left: var(--gx, auto);
     top: var(--gy, -36px);
-    right: auto;
     width: 1.25em;
     font-size: var(--fs-hero);
     transform: translate(12%, -56%) rotate(-8deg);
@@ -162,13 +122,12 @@ import Button from '../ui/Button.astro';
   :global(html:not(.js)) .hero__grade {
     right: 0;
   }
-
   .hero__lead {
     display: flex;
     gap: 14px;
     align-items: flex-start;
     margin: clamp(22px, 3vw, 36px) 0 0;
-    max-width: 36rem;
+    max-width: 34rem;
     font-size: var(--fs-lead);
     line-height: 1.55;
     color: var(--color-ink-500);
@@ -180,9 +139,6 @@ import Button from '../ui/Button.astro';
     margin-top: 2px;
     border-radius: 50%;
     overflow: hidden;
-    box-shadow:
-      0 0 0 2px var(--color-sky-50),
-      0 0 0 3px var(--line-strong);
   }
   .hero__avatar :global(img) {
     width: 100%;
@@ -198,9 +154,6 @@ import Button from '../ui/Button.astro';
   .hero__ctas > :global(*) {
     flex: 1 1 100%;
   }
-  .hero__ctas :global(.btn) {
-    width: 100%;
-  }
   .hero__trust {
     display: flex;
     flex-wrap: wrap;
@@ -210,7 +163,6 @@ import Button from '../ui/Button.astro';
     list-style: none;
     font-size: var(--fs-small);
     font-weight: 500;
-    color: var(--color-navy-900);
   }
   .hero__trust li {
     display: inline-flex;
@@ -218,70 +170,77 @@ import Button from '../ui/Button.astro';
     gap: 8px;
   }
 
-  /* ---------- Фото в арке ---------- */
   .hero__visual {
     position: relative;
     margin: 0;
-    justify-self: center;
-    width: min(100%, 440px);
+  }
+  .hero__photo {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--color-sand-100);
+  }
+  .hero__photo :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 54% 32%;
   }
   .hero__caption {
     display: grid;
     gap: 2px;
-    margin-top: 14px;
-    padding-left: 14px;
-    border-left: 1.5px solid rgba(217, 71, 63, 0.45);
+    padding: 14px var(--gutter) 0;
     font-family: var(--font-serif);
     font-style: italic;
     font-size: 1.05rem;
     line-height: 1.35;
     color: var(--color-ink-500);
   }
-  .hero__arch {
-    position: relative;
-    aspect-ratio: 4 / 5;
-    border-radius: 999px 999px 32px 32px;
-    overflow: hidden;
-    background: var(--color-sand-100);
-  }
-  .hero__photo {
-    position: absolute;
-    inset: 0;
-  }
-  .hero__photo :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: 54% 34%;
-  }
+
   @media (min-width: 640px) {
     .hero__ctas > :global(*) {
       flex: 0 0 auto;
     }
-    .hero__ctas :global(.btn) {
-      width: auto;
-    }
   }
   @media (min-width: 1024px) {
     .hero {
-      display: flex;
-      align-items: center;
-      padding-top: calc(var(--nav-h) + 56px);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+      min-height: 100svh;
     }
-    .hero__grid {
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      gap: clamp(40px, 5vw, 96px);
+    .hero__text {
+      align-self: center;
+      padding: calc(var(--nav-h) + 40px) clamp(40px, 5vw, 96px) 48px
+        max(var(--gutter), calc((100vw - var(--maxw)) / 2));
+    }
+    /* Заголовок подстраивается и под высоту экрана — весь первый экран влезает на ноутбуке */
+    .hero__title,
+    .hero__grade {
+      font-size: min(var(--fs-hero), 11svh);
+    }
+    .hero__lead {
+      margin-top: min(36px, 3svh);
+    }
+    .hero__ctas {
+      margin-top: min(28px, 3svh);
     }
     .hero__avatar {
       display: none;
     }
-    .hero__visual {
-      width: 100%;
-      max-width: 480px;
-      justify-self: end;
+    /* Фото заполняет всю правую колонку до края экрана */
+    .hero__photo {
+      position: absolute;
+      inset: 0;
+      aspect-ratio: auto;
     }
-    .hero__arch {
-      aspect-ratio: 0.78;
+    /* Подпись — на самой фотографии, внизу, как в журнале */
+    .hero__caption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 96px 28px 24px;
+      background: linear-gradient(rgba(12, 26, 53, 0), rgba(12, 26, 53, 0.55) 45%, rgba(12, 26, 53, 0.78));
+      color: #f5f9ff;
     }
   }
 </style>
