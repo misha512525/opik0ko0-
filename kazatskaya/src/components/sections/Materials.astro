@@ -1,0 +1,350 @@
+---
+import { MATERIALS, LINKS } from '@/content/content';
+import { link } from '@/lib/links';
+import { typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+import Button from '../ui/Button.astro';
+import Todo from '../ui/Todo.astro';
+
+const max = link('max');
+const bot = link('bot');
+---
+
+<section class="materials" id="materials" aria-labelledby="materials-title">
+  <div class="container">
+    <h2 id="materials-title" class="h2 materials__title" data-reveal><Rich text={MATERIALS.title} /></h2>
+
+    <div class="materials__grid">
+      <!-- Пробные КИМы -->
+      <article class="kim" data-kim>
+        <div class="kim__sheets" aria-hidden="true" data-kim-sheets>
+          {
+            MATERIALS.kim.levels.map((lvl, i) => (
+              <div class={`sheet sheet--${i}`} data-sheet>
+                <span class="sheet__head">
+                  <span>КИМ ЕГЭ</span>
+                  <span class="sheet__level">{lvl}</span>
+                </span>
+                <span class="sheet__lines" />
+                <span class="sheet__task task-badge">№ {[9, 14, 27][i]}</span>
+              </div>
+            ))
+          }
+        </div>
+
+        <div class="kim__body">
+          <h3 class="kim__title">{MATERIALS.kim.title}</h3>
+          <ul class="kim__levels">
+            {MATERIALS.kim.levels.map((l) => <li>{l}</li>)}
+          </ul>
+          <Todo note="одна цена для всех уровней?">
+            <p class="kim__price">
+              <span class="kim__sum">{typo(MATERIALS.kim.price)}</span>
+              <span class="kim__note">{MATERIALS.kim.priceNote}</span>
+            </p>
+          </Todo>
+          <ul class="kim__includes">
+            {MATERIALS.kim.includes.map((x) => <li>{typo(x)}</li>)}
+          </ul>
+          <p class="kim__promise">
+            <span class="wavy">{typo(MATERIALS.kim.promise)}</span>
+          </p>
+          <Button href={LINKS.channel} goal="kim_channel">{MATERIALS.kim.cta}</Button>
+        </div>
+      </article>
+
+      <!-- Бесплатное -->
+      <article class="free" data-free>
+        <h3 class="free__title">{MATERIALS.free.title}</h3>
+        <ul class="free__list">
+          {
+            MATERIALS.free.items.map((x) => (
+              <li data-free-item>
+                <svg class="pen pen--green" viewBox="0 0 28 24" width="20" height="18" aria-hidden="true">
+                  <path d="M3 13 C6 15 9 18 11 21 C15 12 20 7 26 3" stroke-width="2.6" />
+                </svg>
+                <span>{typo(x)}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <Button href={LINKS.channel} variant="dark" goal="free_channel">{MATERIALS.free.cta}</Button>
+        <p class="free__extra">
+          {typo(MATERIALS.extra)}
+          {
+            (bot || max) && (
+              <span class="free__links">
+                {bot && (
+                  <a class="link" href={bot} target="_blank" rel="noopener">
+                    Telegram-бот
+                  </a>
+                )}
+                {max && (
+                  <a class="link" href={max} target="_blank" rel="noopener">
+                    Канал в MAX
+                  </a>
+                )}
+              </span>
+            )
+          }
+          <Todo note="ссылки на бота и MAX" hideInProd as="span"
+            ><span>{'{{BOT_URL}} {{MAX_URL}}'}</span></Todo
+          >
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .materials {
+    padding-block: var(--section-y);
+    background-color: var(--color-sky-50);
+  }
+  .materials__grid {
+    display: grid;
+    gap: 20px;
+    margin-top: clamp(36px, 5vw, 64px);
+  }
+
+  /* ---------- КИМы ---------- */
+  .kim {
+    position: relative;
+    display: grid;
+    gap: 28px;
+    padding: 28px 22px 28px;
+    border-radius: var(--radius-xl);
+    background: var(--color-navy-900);
+    color: var(--color-sky-50);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .kim::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    width: 60vmax;
+    height: 60vmax;
+    right: -30vmax;
+    top: -30vmax;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(79, 142, 219, 0.4), transparent 70%);
+  }
+  .kim__sheets {
+    position: relative;
+    height: 220px;
+    margin-inline: auto;
+    width: min(100%, 300px);
+    perspective: 900px;
+  }
+  .sheet {
+    position: absolute;
+    left: 50%;
+    top: 10px;
+    width: 160px;
+    height: 200px;
+    margin-left: -80px;
+    padding: 14px 14px 12px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 10px;
+    border-radius: 12px;
+    background: var(--color-sky-50);
+    color: var(--color-navy-900);
+    box-shadow: 0 24px 40px -18px rgba(0, 0, 0, 0.5);
+    transform-origin: 50% 120%;
+    rotate: var(--r, 0deg);
+    translate: var(--tx, 0) 0;
+  }
+  .sheet--0 {
+    --r: -14deg;
+    --tx: -46px;
+  }
+  .sheet--1 {
+    --r: 0deg;
+    z-index: 1;
+  }
+  .sheet--2 {
+    --r: 14deg;
+    --tx: 46px;
+    z-index: 2;
+  }
+  .sheet__head {
+    display: grid;
+    gap: 2px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--color-ink-500);
+  }
+  .sheet__level {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    line-height: 1.05;
+    font-weight: 600;
+    color: var(--color-navy-900);
+  }
+  .sheet__lines {
+    background: repeating-linear-gradient(transparent 0 13px, rgba(79, 142, 219, 0.22) 13px 14px);
+    border-radius: 2px;
+  }
+  .sheet__task {
+    justify-self: start;
+    font-size: 0.875rem;
+  }
+  .kim__title {
+    margin: 0;
+    font-size: clamp(2rem, 1.5rem + 2vw, 3.2rem);
+    line-height: 1;
+  }
+  .kim__levels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .kim__levels li {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(174, 205, 244, 0.3);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .kim__price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 26px 0 0;
+  }
+  .kim__sum {
+    font-family: var(--font-serif);
+    font-size: clamp(3.4rem, 2.6rem + 3vw, 5rem);
+    line-height: 0.9;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    font-variant-numeric: lining-nums;
+  }
+  .kim__note {
+    color: rgba(232, 241, 253, 0.7);
+  }
+  .kim__includes {
+    display: grid;
+    gap: 6px;
+    margin: 18px 0 0;
+    padding: 0 0 0 18px;
+    color: rgba(232, 241, 253, 0.85);
+  }
+  .kim__includes li::marker {
+    color: var(--color-blue-400);
+  }
+  .kim__promise {
+    margin: 22px 0 26px;
+    max-width: 40ch;
+    font-family: var(--font-serif);
+    font-size: clamp(1.35rem, 1.1rem + 0.9vw, 1.75rem);
+    line-height: 1.25;
+    font-weight: 500;
+  }
+  /* Волнистое подчёркивание-«правка» */
+  .wavy {
+    text-decoration: underline wavy var(--color-pen-red);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 6px;
+    text-decoration-skip-ink: none;
+  }
+
+  /* ---------- Бесплатное ---------- */
+  .free {
+    display: grid;
+    align-content: start;
+    gap: 22px;
+    padding: 28px 22px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--line);
+    background-color: #fff;
+    background-image: linear-gradient(transparent 35px, rgba(79, 142, 219, 0.1) 36px);
+    background-size: 100% 36px;
+    box-shadow: var(--shadow-sm);
+  }
+  .free__title {
+    margin: 0;
+    font-size: clamp(2rem, 1.5rem + 2vw, 3.2rem);
+    line-height: 1;
+  }
+  .free__list {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .free__list li {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    align-items: start;
+    line-height: 1.45;
+  }
+  .free__list svg {
+    margin-top: 3px;
+  }
+  .free :global(.btn) {
+    justify-self: start;
+  }
+  .free__extra {
+    margin: 0;
+    font-size: var(--fs-small);
+    color: var(--color-ink-500);
+  }
+  .free__links {
+    display: flex;
+    gap: 16px;
+  }
+
+  @media (min-width: 640px) {
+    .kim,
+    .free {
+      padding: 40px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .materials__grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+    .kim {
+      display: block;
+      padding: 56px 48px;
+    }
+    .kim__body {
+      position: relative;
+      z-index: 1;
+      max-width: 52%;
+    }
+    .kim__sheets {
+      position: absolute;
+      right: 16px;
+      bottom: 24px;
+      width: 42%;
+      height: 330px;
+    }
+    .sheet {
+      width: 190px;
+      height: 250px;
+      margin-left: -95px;
+      top: 30px;
+    }
+    .sheet--0 {
+      --tx: -60px;
+    }
+    .sheet--2 {
+      --tx: 60px;
+    }
+    .free {
+      padding: 48px 40px;
+    }
+  }
+</style>

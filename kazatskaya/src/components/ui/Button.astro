@@ -1,0 +1,72 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  href: string;
+  variant?: 'primary' | 'ghost' | 'dark' | 'light';
+  size?: 'md' | 'sm';
+  icon?: 'arrow' | 'tg' | 'down';
+  magnetic?: boolean;
+  external?: boolean;
+  /** Цель для аналитики */
+  goal?: string;
+  cursor?: string;
+  class?: string;
+  [key: `data-${string}`]: string | undefined;
+}
+const {
+  href,
+  variant = 'primary',
+  size = 'md',
+  icon = 'arrow',
+  magnetic = false,
+  external = href.startsWith('http'),
+  goal,
+  cursor,
+  class: cls,
+  ...rest
+} = Astro.props;
+const classes = [
+  'btn',
+  `btn--${variant}`,
+  size === 'sm' && 'btn--sm',
+  variant === 'primary' && 'js-shine',
+  cls,
+]
+  .filter(Boolean)
+  .join(' ');
+const ext = external ? { target: '_blank', rel: 'noopener' } : {};
+---
+
+{
+  magnetic ? (
+    <span class="magnet" data-magnetic>
+      <a href={href} class={classes} data-goal={goal} data-cursor={cursor} {...ext} {...rest}>
+        <span class="btn__label">
+          <slot />
+        </span>
+        <span class="btn__icon">
+          <Icon name={icon} size={16} />
+          <Icon name={icon} size={16} />
+        </span>
+      </a>
+    </span>
+  ) : (
+    <a href={href} class={classes} data-goal={goal} data-cursor={cursor} {...ext} {...rest}>
+      <span class="btn__label">
+        <slot />
+      </span>
+      <span class="btn__icon">
+        <Icon name={icon} size={16} />
+        <Icon name={icon} size={16} />
+      </span>
+    </a>
+  )
+}
+
+<style>
+  .magnet {
+    display: inline-flex;
+    will-change: transform;
+  }
+</style>

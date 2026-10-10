@@ -1,0 +1,75 @@
+---
+import { MARQUEE } from '@/content/content';
+const words = [...MARQUEE, ...MARQUEE];
+---
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__track">
+    {
+      [0, 1].map(() => (
+        <ul class="marquee__group">
+          {words.map((w) => (
+            <li>
+              <span>{w}</span>
+              <svg viewBox="0 0 20 20" width="14" height="14">
+                <path d="M10 2v16M2 10h16M4.5 4.5l11 11M15.5 4.5l-11 11" />
+              </svg>
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .marquee {
+    position: relative;
+    overflow: hidden;
+    padding: 18px 0;
+    border-block: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.5);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    animation: marquee 60s linear infinite;
+  }
+  .marquee__group {
+    display: flex;
+    flex: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .marquee li {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding-right: 28px;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.6rem);
+    line-height: 1.1;
+    white-space: nowrap;
+    color: var(--color-blue-800);
+    font-variant-numeric: lining-nums;
+  }
+  .marquee svg {
+    fill: none;
+    stroke: var(--color-blue-400);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee__track {
+      animation: none;
+    }
+  }
+</style>

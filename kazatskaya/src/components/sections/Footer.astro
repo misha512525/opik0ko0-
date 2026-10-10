@@ -1,0 +1,115 @@
+---
+import { NAV, LINKS, FOOTER } from '@/content/content';
+import { link } from '@/lib/links';
+import Mono from '../ui/Mono.astro';
+const max = link('max');
+---
+
+<footer class="footer">
+  <div class="container footer__grid">
+    <div class="footer__brand">
+      <a class="footer__mono" href="#top"><Mono size={64} /><span class="sr-only">Наверх</span></a>
+      <p class="footer__joke hand">{FOOTER.joke}</p>
+    </div>
+    <nav aria-label="Разделы (подвал)">
+      <ul class="footer__list">
+        {
+          NAV.map((n) => (
+            <li>
+              <a class="footer__link" href={n.href}>
+                {n.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <ul class="footer__list">
+      <li><a class="footer__link" href={LINKS.contact} target="_blank" rel="noopener">Telegram Анны</a></li>
+      <li>
+        <a class="footer__link" href={LINKS.channel} target="_blank" rel="noopener"
+          >Канал «ЕГЭ русский язык | 90+»</a
+        >
+      </li>
+      <li>
+        <a class="footer__link" href={LINKS.results} target="_blank" rel="noopener">Результаты и отзывы</a>
+      </li>
+      {
+        max && (
+          <li>
+            <a class="footer__link" href={max} target="_blank" rel="noopener">
+              Канал в MAX
+            </a>
+          </li>
+        )
+      }
+    </ul>
+  </div>
+  <div class="container footer__bottom">
+    <span>{FOOTER.copyright}</span>
+    <a class="footer__link" href="/privacy/">{FOOTER.privacy}</a>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding: clamp(56px, 7vw, 96px) 0 calc(28px + env(safe-area-inset-bottom));
+    background: var(--color-sky-50);
+    color: var(--color-navy-900);
+  }
+  .footer__grid {
+    display: grid;
+    gap: 32px;
+  }
+  .footer__mono {
+    display: inline-flex;
+    border-radius: 50%;
+    transition: transform var(--dur-press) var(--ease-out);
+  }
+  .footer__mono:active {
+    transform: scale(0.95);
+  }
+  .footer__joke {
+    margin: 16px 0 0;
+    font-size: 1.8rem;
+    line-height: 1.15;
+    color: var(--color-blue-600);
+  }
+  .footer__list {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .footer__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--color-ink-500);
+    transition: color var(--dur-ui);
+  }
+  .footer__link:hover {
+    color: var(--color-navy-900);
+  }
+  .footer__link:active {
+    opacity: 0.6;
+  }
+  .footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 24px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: var(--fs-small);
+    color: var(--color-ink-500);
+  }
+  @media (min-width: 768px) {
+    .footer__grid {
+      grid-template-columns: 1.4fr 1fr 1.2fr;
+    }
+  }
+</style>

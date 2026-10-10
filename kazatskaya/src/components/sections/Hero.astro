@@ -1,0 +1,469 @@
+---
+import { Picture } from 'astro:assets';
+import anna from '@/assets/anna-hero.jpg';
+import annaAvatar from '@/assets/anna-avatar.jpg';
+import { HERO } from '@/content/content';
+import { tg } from '@/lib/links';
+import { plain, typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+import Button from '../ui/Button.astro';
+
+const letterSpots = [
+  { l: 8, t: 18, s: 1.0, d: 0.6 },
+  { l: 44, t: 9, s: 0.7, d: -0.4 },
+  { l: 88, t: 14, s: 0.9, d: 0.9 },
+  { l: 4, t: 72, s: 0.8, d: -0.7 },
+  { l: 52, t: 86, s: 1.1, d: 0.5 },
+  { l: 93, t: 58, s: 0.75, d: -0.9 },
+  { l: 30, t: 48, s: 0.6, d: 0.3 },
+  { l: 70, t: 36, s: 0.65, d: -0.5 },
+];
+---
+
+<section class="hero paper-grid" id="top" aria-labelledby="hero-title" data-hero>
+  <div class="hero__aurora" aria-hidden="true">
+    <span class="blob blob--a" data-speed="-12"></span>
+    <span class="blob blob--b" data-speed="10"></span>
+    <span class="blob blob--c" data-speed="-6"></span>
+  </div>
+  <span class="hero__margin" aria-hidden="true"></span>
+  <div class="hero__letters" aria-hidden="true">
+    {
+      HERO.floatingLetters.map((ch, i) => {
+        const p = letterSpots[i % letterSpots.length];
+        return (
+          <span
+            class="float-letter"
+            data-speed={p.d * 14}
+            data-ch={ch}
+            style={`left:${p.l}%;top:${p.t}%;--s:${p.s};--delay:${-i * 1.7}s`}
+          />
+        );
+      })
+    }
+  </div>
+
+  <div class="container hero__grid">
+    <div class="hero__text">
+      <div class="hero__title-wrap">
+        <h1 id="hero-title" class="hero__title" data-hero-title><Rich text={HERO.title} /></h1>
+
+        <!-- Оценка на полях: «100», обведённое красной ручкой -->
+        <svg class="hero__grade" viewBox="0 0 170 110" aria-hidden="true" data-hero-grade>
+          <g class="pen pen--red" stroke-width="4.2">
+            <path d="M38 40 C42 36 47 31 52 26 C51 44 50 62 49 82"></path>
+            <path d="M84 30 C70 30 64 52 66 66 C68 82 82 86 90 72 C97 58 97 32 84 30"></path>
+            <path d="M122 30 C108 30 102 52 104 66 C106 82 120 86 128 72 C135 58 135 32 122 30"></path>
+            <path
+              d="M30 62 C24 32 66 12 108 12 C146 12 166 34 160 60 C154 88 110 100 74 98 C40 96 18 84 22 62 C24 50 34 40 46 34"
+              stroke-width="3.2"></path>
+          </g>
+        </svg>
+      </div>
+
+      <p class="hero__lead">
+        <span class="hero__avatar" aria-hidden="true">
+          <Picture
+            src={annaAvatar}
+            alt=""
+            widths={[96]}
+            sizes="48px"
+            formats={['avif', 'webp']}
+            loading="eager"
+            class="hero__avatar-img"
+          />
+        </span>
+        <span data-hero-fade>{typo(HERO.lead)}</span>
+      </p>
+
+      <div class="hero__ctas" data-hero-fade>
+        <Button href={tg()} icon="tg" magnetic goal="tg_hero" cursor="Написать">{HERO.primary}</Button>
+        <Button href="#results" variant="ghost" icon="down">{HERO.secondary}</Button>
+      </div>
+
+      <ul class="hero__trust" data-hero-fade>
+        {
+          HERO.trust.map((t) => (
+            <li>
+              <svg class="pen pen--green" viewBox="0 0 28 24" width="18" height="16" aria-hidden="true">
+                <path d="M3 13 C6 15 9 18 11 21 C15 12 20 7 26 3" stroke-width="2.6" />
+              </svg>
+              {typo(t)}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <figure class="hero__visual" data-hero-visual>
+      <div class="hero__arch" data-hero-arch>
+        <div class="hero__photo" data-hero-photo>
+          <Picture
+            src={anna}
+            alt={plain(HERO.photoAlt)}
+            widths={[440, 660, 888]}
+            sizes="(min-width: 1024px) 36vw, (min-width: 640px) 60vw, 88vw"
+            formats={['avif', 'webp']}
+            loading="eager"
+            fetchpriority="high"
+            class="hero__img"
+          />
+        </div>
+      </div>
+      <span class="sticker sticker--a glass" data-float="1" data-speed="-8">
+        <span class="sticker__num">100</span>
+        <span class="sticker__text">{typo(HERO.stickers[0])}</span>
+      </span>
+      <span class="sticker sticker--b glass" data-float="2" data-speed="6">
+        <span class="sticker__dot" aria-hidden="true"></span>
+        <span class="sticker__text">{typo(HERO.stickers[1])}</span>
+      </span>
+      <span class="hero__task task-badge" aria-hidden="true" data-float="3" data-speed="-14">№ 27</span>
+    </figure>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    min-height: 100svh;
+    padding-top: calc(var(--nav-h) + 48px);
+    padding-bottom: clamp(56px, 8vw, 96px);
+    background-color: var(--color-sky-50);
+  }
+  /* мягкое затухание клетки к низу */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 30%;
+    background: linear-gradient(transparent, var(--color-sky-50));
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* ---------- Aurora: статичные градиенты, двигаются только transform ---------- */
+  .hero__aurora {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    will-change: transform;
+  }
+  .blob--a {
+    width: 70vmax;
+    height: 70vmax;
+    right: -26vmax;
+    top: -30vmax;
+    background: radial-gradient(closest-side, rgba(174, 205, 244, 0.75), rgba(174, 205, 244, 0) 70%);
+    animation: breathe 14s var(--ease-in-out) infinite alternate;
+  }
+  .blob--b {
+    width: 55vmax;
+    height: 55vmax;
+    left: -24vmax;
+    bottom: -26vmax;
+    background: radial-gradient(closest-side, rgba(211, 229, 250, 0.9), rgba(211, 229, 250, 0) 70%);
+    animation: breathe 18s var(--ease-in-out) -6s infinite alternate;
+  }
+  .blob--c {
+    width: 36vmax;
+    height: 36vmax;
+    right: 6vw;
+    bottom: 4vh;
+    background: radial-gradient(closest-side, rgba(243, 234, 223, 0.95), rgba(243, 234, 223, 0) 70%);
+    animation: breathe 16s var(--ease-in-out) -3s infinite alternate;
+  }
+  @keyframes breathe {
+    from {
+      scale: 1;
+      rotate: 0deg;
+    }
+    to {
+      scale: 1.12;
+      rotate: 8deg;
+    }
+  }
+
+  /* Поля тетради */
+  .hero__margin {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: max(8px, calc((100vw - var(--maxw)) / 2 - 28px));
+    width: 1.5px;
+    background: rgba(217, 71, 63, 0.28);
+    z-index: -1;
+  }
+
+  .float-letter::before {
+    content: attr(data-ch);
+  }
+  .float-letter {
+    position: absolute;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: calc(clamp(2.4rem, 6vw, 5.5rem) * var(--s));
+    line-height: 1;
+    color: var(--color-blue-300);
+    opacity: 0.55;
+    user-select: none;
+    animation: drift 11s var(--ease-in-out) var(--delay) infinite alternate;
+  }
+  .float-letter:nth-child(n + 6) {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .float-letter:nth-child(n + 6) {
+      display: block;
+    }
+  }
+  @keyframes drift {
+    to {
+      translate: 0 -14px;
+      rotate: -6deg;
+    }
+  }
+
+  /* ---------- Сетка ---------- */
+  .hero__grid {
+    position: relative;
+    display: grid;
+    gap: 48px;
+    align-items: center;
+  }
+  .hero__text {
+    position: relative;
+    z-index: 2;
+  }
+  .hero__title-wrap {
+    position: relative;
+  }
+  :global(.motion-ok) .hero__title {
+    visibility: hidden;
+  }
+  .hero__title {
+    font-size: var(--fs-hero);
+    line-height: 0.96;
+    letter-spacing: -0.035em;
+    font-weight: 500;
+    max-width: 11ch;
+    margin: 0;
+  }
+  .hero__title :global(em) {
+    color: var(--color-blue-500);
+    font-weight: 500;
+  }
+  /* Позиция задаётся из JS по слову «сто» (--gx/--gy); здесь — фолбэк без JS */
+  .hero__grade {
+    position: absolute;
+    left: var(--gx, auto);
+    top: var(--gy, -36px);
+    right: auto;
+    width: 1.25em;
+    font-size: var(--fs-hero);
+    transform: translate(12%, -56%) rotate(-8deg);
+    pointer-events: none;
+  }
+  :global(html:not(.js)) .hero__grade {
+    right: 0;
+  }
+
+  .hero__lead {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin: clamp(22px, 3vw, 36px) 0 0;
+    max-width: 36rem;
+    font-size: var(--fs-lead);
+    line-height: 1.55;
+    color: var(--color-ink-500);
+  }
+  .hero__avatar {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    margin-top: 2px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 2px var(--color-sky-50),
+      0 0 0 3px var(--line-strong);
+  }
+  .hero__avatar :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .hero__ctas > :global(*) {
+    flex: 1 1 100%;
+  }
+  .hero__ctas :global(.btn) {
+    width: 100%;
+  }
+  .hero__trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+    font-weight: 500;
+    color: var(--color-navy-900);
+  }
+  .hero__trust li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ---------- Фото в арке ---------- */
+  .hero__visual {
+    position: relative;
+    margin: 0;
+    justify-self: center;
+    width: min(100%, 440px);
+  }
+  .hero__arch {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: 999px 999px 32px 32px;
+    overflow: hidden;
+    background: var(--color-sand-100);
+    box-shadow: var(--shadow-lg);
+    outline: 1px solid rgba(255, 255, 255, 0.7);
+    outline-offset: -1px;
+  }
+  .hero__photo {
+    position: absolute;
+    inset: -6% 0;
+  }
+  .hero__photo :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 54% 34%;
+  }
+  .sticker {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 220px;
+    padding: 10px 14px 10px 10px;
+    border-radius: 20px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    will-change: transform;
+  }
+  [data-float] {
+    animation: float 4.2s var(--ease-in-out) infinite alternate;
+  }
+  [data-float='2'] {
+    animation-duration: 5.1s;
+    animation-delay: -2s;
+  }
+  [data-float='3'] {
+    animation-duration: 3.6s;
+    animation-delay: -1s;
+  }
+  @keyframes float {
+    from {
+      translate: 0 3px;
+      rotate: -1deg;
+    }
+    to {
+      translate: 0 -5px;
+      rotate: 1deg;
+    }
+  }
+  .sticker--a {
+    left: -14px;
+    bottom: 22%;
+  }
+  .sticker--b {
+    right: -10px;
+    top: 16%;
+    max-width: 190px;
+  }
+  .sticker__num {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-pen-red);
+    color: var(--color-pen-red);
+    font-family: var(--font-hand);
+    font-size: 1.15rem;
+    transform: rotate(-8deg);
+  }
+  .sticker__dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    margin-left: 4px;
+    border-radius: 50%;
+    background: var(--color-pen-red);
+    box-shadow: 0 0 0 4px rgba(217, 71, 63, 0.15);
+  }
+  .hero__task {
+    position: absolute;
+    right: 12%;
+    bottom: -18px;
+    font-size: 1.25rem;
+    padding: 0.35em 0.8em;
+  }
+
+  @media (min-width: 640px) {
+    .hero__ctas > :global(*) {
+      flex: 0 0 auto;
+    }
+    .hero__ctas :global(.btn) {
+      width: auto;
+    }
+  }
+  @media (min-width: 1024px) {
+    .hero {
+      display: flex;
+      align-items: center;
+      padding-top: calc(var(--nav-h) + 56px);
+    }
+    .hero__grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: clamp(40px, 5vw, 96px);
+    }
+    .hero__avatar {
+      display: none;
+    }
+    .hero__visual {
+      width: 100%;
+      max-width: 480px;
+      justify-self: end;
+    }
+    .hero__arch {
+      aspect-ratio: 0.78;
+    }
+    .sticker--a {
+      left: -48px;
+    }
+    .sticker--b {
+      right: -28px;
+    }
+  }
+</style>

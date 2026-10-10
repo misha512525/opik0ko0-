@@ -1,0 +1,284 @@
+---
+import { REVIEWS, LINKS } from '@/content/content';
+import { SHOW_TODO, isPlaceholder } from '@/lib/links';
+import { typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+import Icon from '../ui/Icon.astro';
+
+// Никогда не выдумываем отзывы: карточки с плейсхолдерами видны только в режиме редактуры
+const items = REVIEWS.items.filter((r) =>
+  r.kind === 'screenshot' ? true : SHOW_TODO || !(isPlaceholder(r.text) || isPlaceholder(r.name)),
+);
+const hasItems = items.length > 0;
+---
+
+<section class="reviews" id="reviews" aria-labelledby="reviews-title">
+  <div class="container reviews__head">
+    <h2 id="reviews-title" class="h2" data-reveal><Rich text={REVIEWS.title} /></h2>
+    <p class="lead" data-reveal>{typo(REVIEWS.lead)}</p>
+  </div>
+
+  {
+    hasItems && (
+      <div class="reel" data-reel>
+        <ul class="reel__track" data-reel-track>
+          {items.map((r) =>
+            r.kind === 'screenshot' ? (
+              <li class="rv rv--shot" data-card="flat">
+                <div class="rv__phone">
+                  <img src={r.src} alt={r.alt} loading="lazy" decoding="async" />
+                </div>
+              </li>
+            ) : (
+              <li
+                class:list={['rv', isPlaceholder(r.text) && 'todo']}
+                data-todo={isPlaceholder(r.text) ? 'реальный отзыв' : undefined}
+                data-card="flat"
+              >
+                <svg class="rv__quote" viewBox="0 0 40 32" aria-hidden="true">
+                  <path d="M0 32V19C0 8 6 1 17 0l1 5C11 7 8 11 8 17h8v15H0Zm22 0V19C22 8 28 1 39 0l1 5c-7 2-10 6-10 12h8v15H22Z" />
+                </svg>
+                <blockquote class="rv__text">{typo(r.text)}</blockquote>
+                <p class="rv__who">
+                  <span class="hand">{r.name}</span>
+                  {r.score && <span class="rv__score">{r.score}</span>}
+                </p>
+              </li>
+            ),
+          )}
+        </ul>
+        <div class="reel__progress" aria-hidden="true">
+          <span data-reel-progress />
+        </div>
+      </div>
+    )
+  }
+
+  <div class="container">
+    <a
+      class="channel"
+      href={LINKS.results}
+      target="_blank"
+      rel="noopener"
+      data-goal="reviews_channel"
+      data-card="flat"
+      data-cursor="Открыть"
+    >
+      <div class="channel__text">
+        <span class="channel__title">{REVIEWS.channelCta}</span>
+        <span class="channel__sub">t.me/egerusskiy100Kazatskaya</span>
+      </div>
+      <!-- Абстрактная лента сообщений: без выдуманного текста -->
+      <div class="channel__bubbles" aria-hidden="true">
+        <span class="bubble" style="--w:78%"></span>
+        <span class="bubble bubble--me" style="--w:46%"></span>
+        <span class="bubble" style="--w:64%"><b class="bubble__score">100</b></span>
+        <span class="bubble" style="--w:88%"></span>
+        <span class="bubble bubble--me" style="--w:38%"></span>
+      </div>
+      <span class="channel__btn">
+        <span class="btn btn--light">
+          <span class="btn__label">Открыть канал</span>
+          <span class="btn__icon"><Icon name="arrow" size={16} /><Icon name="arrow" size={16} /></span>
+        </span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<style>
+  .reviews {
+    padding-block: var(--section-y);
+    overflow: clip;
+  }
+  .reviews__head {
+    display: grid;
+    gap: 20px;
+  }
+
+  /* ---------- Лента ---------- */
+  .reel {
+    margin-top: clamp(32px, 5vw, 56px);
+  }
+  .reel__track {
+    display: flex;
+    gap: 16px;
+    margin: 0;
+    padding: 8px var(--gutter) 24px;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .reel__track::-webkit-scrollbar {
+    display: none;
+  }
+  .rv {
+    position: relative;
+    flex: 0 0 min(82vw, 380px);
+    scroll-snap-align: start;
+    display: grid;
+    align-content: space-between;
+    gap: 20px;
+    min-height: 300px;
+    padding: 28px 26px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--line);
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+  }
+  .rv__quote {
+    width: 34px;
+    fill: var(--color-blue-300);
+  }
+  .rv__text {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+    line-height: 1.25;
+  }
+  .rv__who {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--color-blue-800);
+  }
+  .rv__score {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-pen-red);
+  }
+  .rv--shot {
+    padding: 14px;
+    background: var(--color-navy-900);
+  }
+  .rv__phone {
+    border-radius: 22px;
+    overflow: hidden;
+  }
+  .reel__progress {
+    height: 2px;
+    margin-inline: var(--gutter);
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .reel__progress span {
+    display: block;
+    height: 100%;
+    background: var(--color-blue-500);
+    transform-origin: 0 50%;
+    transform: scaleX(0.15);
+  }
+
+  /* ---------- Карточка-ссылка на канал ---------- */
+  .channel {
+    position: relative;
+    display: grid;
+    gap: 28px;
+    margin-top: clamp(32px, 5vw, 56px);
+    padding: 28px 24px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--color-blue-500), var(--color-blue-800));
+    color: #fff;
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--dur-press) var(--ease-out);
+  }
+  .channel:active {
+    transform: scale(0.985);
+  }
+  .channel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      420px circle at var(--mx, 80%) var(--my, 20%),
+      rgba(255, 255, 255, 0.22),
+      transparent 60%
+    );
+  }
+  .channel__text {
+    display: grid;
+    gap: 10px;
+  }
+  .channel__title {
+    font-family: var(--font-serif);
+    font-size: clamp(2.4rem, 1.6rem + 3.4vw, 5rem);
+    line-height: 0.98;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  .channel__sub {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.72);
+    overflow-wrap: anywhere;
+  }
+  .channel__bubbles {
+    display: grid;
+    gap: 10px;
+  }
+  .bubble {
+    position: relative;
+    display: block;
+    width: var(--w);
+    height: 38px;
+    border-radius: 18px 18px 18px 6px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .bubble--me {
+    justify-self: end;
+    border-radius: 18px 18px 6px 18px;
+    background: rgba(255, 255, 255, 0.3);
+  }
+  .bubble__score {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    translate: 0 -50%;
+    font-family: var(--font-hand);
+    font-weight: 400;
+    font-size: 1.15rem;
+    color: #ffd2cf;
+  }
+  .channel__btn {
+    pointer-events: none;
+  }
+  .channel:hover .btn__icon :global(svg:first-child) {
+    transform: translate(150%, -150%);
+  }
+  .channel:hover .btn__icon :global(svg + svg) {
+    transform: none;
+  }
+
+  @media (min-width: 1024px) {
+    .reviews__head {
+      grid-template-columns: 1fr 1fr;
+      align-items: end;
+    }
+    .rv {
+      flex-basis: 420px;
+    }
+    .channel {
+      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-rows: auto auto;
+      align-items: center;
+      padding: 56px;
+      column-gap: 64px;
+    }
+    .channel__bubbles {
+      grid-row: span 2;
+    }
+    .channel__btn {
+      align-self: end;
+    }
+  }
+</style>

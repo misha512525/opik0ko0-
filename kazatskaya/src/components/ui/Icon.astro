@@ -1,0 +1,59 @@
+---
+/** Иконки в едином стиле: stroke 1.5–1.75, скруглённые концы (Lucide-подобные, собственные пути). */
+interface Props {
+  name: 'arrow' | 'tg' | 'play' | 'sound-on' | 'sound-off' | 'plus' | 'check' | 'close' | 'copy' | 'down';
+  size?: number;
+  class?: string;
+}
+const { name, size = 20, class: cls } = Astro.props;
+---
+
+<svg
+  class={cls}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.75"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  {name === 'arrow' && <path d="M7 17 17 7M8 7h9v9" />}
+  {
+    name === 'tg' && (
+      <path d="M21.2 4.3 2.9 11.4c-.9.4-.9 1.6.1 1.9l4.6 1.5 1.7 5.3c.2.7 1.1.9 1.6.4l2.6-2.4 4.6 3.4c.6.4 1.4.1 1.6-.6l3.3-15.4c.2-.9-.7-1.6-1.6-1.2ZM7.6 14.8 18 7.6l-7.8 8.1" />
+    )
+  }
+  {name === 'play' && <path d="M8 5.5v13l10.5-6.5L8 5.5Z" fill="currentColor" stroke="none" />}
+  {
+    name === 'sound-on' && (
+      <>
+        <path d="M11 5 6.5 8.5H3v7h3.5L11 19V5Z" />
+        <path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" />
+      </>
+    )
+  }
+  {
+    name === 'sound-off' && (
+      <>
+        <path d="M11 5 6.5 8.5H3v7h3.5L11 19V5Z" />
+        <path d="m16 9.5 5 5M21 9.5l-5 5" />
+      </>
+    )
+  }
+  {name === 'plus' && <path d="M12 5v14M5 12h14" />}
+  {name === 'check' && <path d="m5 12.5 4.5 4.5L19 7.5" />}
+  {name === 'close' && <path d="M6 6l12 12M18 6 6 18" />}
+  {
+    name === 'copy' && (
+      <>
+        <rect x="8.5" y="8.5" width="11" height="11" rx="2.5" />
+        <path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5" />
+      </>
+    )
+  }
+  {name === 'down' && <path d="M12 5v14m0 0-6-6m6 6 6-6" />}
+</svg>

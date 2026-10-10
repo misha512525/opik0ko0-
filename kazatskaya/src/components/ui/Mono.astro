@@ -1,0 +1,16 @@
+---
+/** Монограмма «АК» — векторная (не текст), как в фавиконе. */
+interface Props {
+  size?: number;
+  class?: string;
+}
+const { size = 40, class: cls } = Astro.props;
+---
+
+<svg class={cls} width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+  <circle cx="32" cy="32" r="32" fill="#3A74BF"></circle>
+  <g fill="none" stroke="#F5F9FF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11.5 44.5 21.5 18.5 31.5 44.5M15.4 35h12.2"></path>
+    <path d="M37 18.5v26M52 18.5 38.6 31.4 52.6 44.5"></path>
+  </g>
+</svg>

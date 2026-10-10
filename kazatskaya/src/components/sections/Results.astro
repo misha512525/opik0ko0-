@@ -1,0 +1,565 @@
+---
+import { RESULTS, RESULTS_SECTION, MANIFESTO, RECORD, LINKS, SHOW_STUDENT_PHOTOS } from '@/content/content';
+import { plural, typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+import Todo from '../ui/Todo.astro';
+
+const balls = (n: number) => plural(n, ['балл', 'балла', 'баллов']);
+---
+
+<section class="results" id="results" aria-labelledby="results-title">
+  <div class="results__glow" aria-hidden="true">
+    <span></span><span></span>
+  </div>
+
+  <div class="container">
+    <p class="manifesto" data-manifesto>{typo(MANIFESTO)}</p>
+
+    <div class="results__grid">
+      <div class="results__media">
+        <div class="phone" data-phone>
+          <div class="phone__screen" data-video data-cursor={SHOW_STUDENT_PHOTOS ? 'Смотреть' : undefined}>
+            {
+              SHOW_STUDENT_PHOTOS ? (
+                <>
+                  <video
+                    muted
+                    loop
+                    playsinline
+                    preload="none"
+                    data-poster="/video/results-reel-poster.jpg"
+                    width="720"
+                    height="1280"
+                    aria-label={RESULTS_SECTION.videoLabel}
+                    aria-describedby="reel-transcript"
+                  >
+                    <source data-src="/video/results-reel.webm" type="video/webm" />
+                    <source data-src="/video/results-reel.mp4" type="video/mp4" />
+                  </video>
+                  <button
+                    class="phone__play"
+                    type="button"
+                    data-video-play
+                    aria-label="Воспроизвести или поставить на паузу"
+                  >
+                    <Icon name="play" size={22} />
+                  </button>
+                  <button
+                    class="phone__sound"
+                    type="button"
+                    data-video-sound
+                    aria-pressed="false"
+                    aria-label="Включить звук"
+                  >
+                    <span class="i-off">
+                      <Icon name="sound-off" size={18} />
+                    </span>
+                    <span class="i-on">
+                      <Icon name="sound-on" size={18} />
+                    </span>
+                  </button>
+                </>
+              ) : (
+                <img
+                  src="/video/results-reel-poster.jpg"
+                  alt="Анна Казацкая — кадр из ролика о результатах учеников"
+                  width="540"
+                  height="960"
+                  loading="lazy"
+                />
+              )
+            }
+          </div>
+          <span class="phone__notch" aria-hidden="true"></span>
+        </div>
+        <p id="reel-transcript" class="sr-only">{RESULTS_SECTION.videoTranscript}</p>
+      </div>
+
+      <div class="results__content">
+        <h2 id="results-title" class="h2 results__title" data-reveal>
+          <Rich text={RESULTS_SECTION.title} />
+        </h2>
+        <p class="results__lead" data-reveal>{typo(RESULTS_SECTION.lead)}</p>
+
+        <div class="cards" data-results-track>
+          <ol class="cards__list" data-results-list>
+            {
+              RESULTS.map((r, i) => (
+                <li
+                  class:list={['rcard', r.score === 100 && 'rcard--hundred']}
+                  data-rcard
+                  data-card
+                  style={`--i:${i}`}
+                >
+                  <span class="rcard__name hand">{r.name}</span>
+                  <span class="rcard__score">
+                    <span class="rcard__num">{r.score}</span>
+                    <span class="rcard__unit">{balls(r.score)}</span>
+                    {r.score === 100 ? (
+                      <svg class="rcard__mark" viewBox="0 0 200 90" aria-hidden="true">
+                        <path
+                          class="pen pen--red"
+                          stroke-width="2.6"
+                          d="M40 74 C10 60 14 22 60 12 C108 2 176 10 190 40 C200 66 160 84 100 84 C60 84 30 76 22 60"
+                        />
+                      </svg>
+                    ) : (
+                      <svg class="rcard__mark rcard__mark--line" viewBox="0 0 200 20" aria-hidden="true">
+                        <path
+                          class="pen pen--red"
+                          stroke-width="2.4"
+                          d="M4 12 C40 6 80 16 120 9 C150 4 176 10 196 8"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  {r.subject || r.year ? (
+                    <span class="rcard__meta">{[r.subject, r.year].filter(Boolean).join(', ')}</span>
+                  ) : (
+                    <Todo note="год и предмет" hideInProd as="span" class="rcard__meta">
+                      {'{{SUBJECT}}, {{YEAR}}'}
+                    </Todo>
+                  )}
+                </li>
+              ))
+            }
+          </ol>
+          <div class="cards__progress" aria-hidden="true"><span data-results-progress></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="record" data-record>
+      <div class="record__year" aria-hidden="true">{RECORD.year}</div>
+      <div class="record__body">
+        <ul class="record__hundreds" aria-hidden="true">
+          {Array.from({ length: RECORD.hundreds }, () => <li data-hundred>100</li>)}
+        </ul>
+        <h3 class="record__title"><Rich text={RESULTS_SECTION.record.title} /></h3>
+        <p class="record__text">{typo(RESULTS_SECTION.record.text)}</p>
+        <div class="record__cta">
+          <Button href={LINKS.results} variant="light" goal="results_channel" cursor="Проверить">
+            {RESULTS_SECTION.cta}
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .results {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    padding-block: var(--section-y);
+    background: var(--color-navy-900);
+    color: var(--color-sky-50);
+    border-radius: 40px 40px 0 0;
+    margin-top: -40px;
+  }
+  .results__glow span {
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .results__glow span:first-child {
+    width: 80vmax;
+    height: 80vmax;
+    left: -30vmax;
+    top: 10%;
+    background: radial-gradient(closest-side, rgba(79, 142, 219, 0.32), rgba(79, 142, 219, 0) 72%);
+  }
+  .results__glow span:last-child {
+    width: 60vmax;
+    height: 60vmax;
+    right: -24vmax;
+    bottom: -10%;
+    background: radial-gradient(closest-side, rgba(130, 178, 236, 0.22), rgba(130, 178, 236, 0) 72%);
+  }
+
+  .manifesto {
+    margin: 0 0 clamp(72px, 10vw, 140px);
+    max-width: 22ch;
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 1.2rem + 3.6vw, 4.6rem);
+    font-weight: 500;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .results__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+  .results__title {
+    color: var(--color-sky-50);
+  }
+  .results__title :global(em) {
+    color: var(--color-blue-400);
+  }
+  .results__lead {
+    margin: 20px 0 0;
+    max-width: 40ch;
+    font-size: var(--fs-lead);
+    line-height: 1.55;
+    color: rgba(232, 241, 253, 0.72);
+  }
+
+  /* ---------- Телефон с видео ---------- */
+  .results__media {
+    display: flex;
+    justify-content: center;
+    order: 2;
+  }
+  .phone {
+    position: relative;
+    width: min(76vw, 320px);
+    aspect-ratio: 9 / 19;
+    padding: 10px;
+    border-radius: 48px;
+    background: linear-gradient(160deg, #24406e, #0e1d3a 60%);
+    box-shadow:
+      0 0 0 1px rgba(174, 205, 244, 0.22),
+      0 40px 80px -30px rgba(0, 0, 0, 0.6),
+      0 0 120px -20px rgba(79, 142, 219, 0.55);
+    will-change: transform;
+  }
+  .phone__notch {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 84px;
+    height: 24px;
+    margin-left: -42px;
+    border-radius: 20px;
+    background: #050c1a;
+  }
+  .phone__screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 38px;
+    overflow: hidden;
+    background: #0c1a35;
+    transform: translateZ(0);
+  }
+  .phone__screen video,
+  .phone__screen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .phone__play {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    color: #fff;
+  }
+  .phone__play :global(svg) {
+    width: 64px;
+    height: 64px;
+    padding: 20px;
+    border-radius: 50%;
+    background: rgba(18, 38, 74, 0.55);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition:
+      opacity var(--dur-ui),
+      transform var(--dur-ui) var(--ease-out);
+  }
+  :global(.is-playing) > .phone__play :global(svg) {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  .phone__play:active :global(svg) {
+    transform: scale(0.94);
+  }
+  .phone__sound {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(18, 38, 74, 0.55);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: transform var(--dur-press) var(--ease-out);
+  }
+  .phone__sound:active {
+    transform: scale(0.92);
+  }
+  .phone__sound .i-on,
+  :global(.is-sound) .phone__sound .i-off {
+    display: none;
+  }
+  :global(.is-sound) .phone__sound .i-on {
+    display: block;
+  }
+
+  /* ---------- Карточки результатов ---------- */
+  .cards {
+    margin-top: 36px;
+    margin-inline: calc(var(--gutter) * -1);
+  }
+  .cards__list {
+    display: flex;
+    gap: 14px;
+    margin: 0;
+    padding: 8px var(--gutter) 20px;
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cards__list::-webkit-scrollbar {
+    display: none;
+  }
+  .rcard {
+    position: relative;
+    flex: 0 0 min(64vw, 260px);
+    scroll-snap-align: center;
+    display: grid;
+    gap: 6px;
+    padding: 22px 22px 24px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    color: var(--color-navy-900);
+    background:
+      linear-gradient(transparent 31px, rgba(79, 142, 219, 0.16) 32px) 0 14px / 100% 32px,
+      var(--color-sky-50);
+    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.55);
+    transform-origin: 50% 70%;
+    transition:
+      box-shadow var(--dur-ui) var(--ease-out),
+      transform var(--dur-press) var(--ease-out);
+  }
+  .rcard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 14px;
+    width: 1.5px;
+    background: rgba(217, 71, 63, 0.35);
+  }
+  .rcard::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      240px circle at var(--mx, 50%) var(--my, 0%),
+      rgba(130, 178, 236, 0.28),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity var(--dur-ui);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .rcard:hover::after {
+      opacity: 1;
+    }
+  }
+  .rcard:global(.is-center)::after {
+    opacity: 1;
+  }
+  .rcard:active {
+    transform: scale(0.98);
+  }
+  .rcard__name {
+    padding-left: 10px;
+    font-size: 1.85rem;
+    line-height: 1.1;
+    color: var(--color-blue-800);
+  }
+  .rcard__score {
+    position: relative;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    justify-self: start;
+    padding-left: 10px;
+  }
+  .rcard__num {
+    font-family: var(--font-serif);
+    font-size: clamp(4rem, 3rem + 3vw, 5.5rem);
+    font-weight: 500;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  .rcard--hundred .rcard__num {
+    color: var(--color-pen-red);
+  }
+  .rcard__unit {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-ink-500);
+  }
+  .rcard__mark {
+    position: absolute;
+    left: -6%;
+    top: -16%;
+    width: 112%;
+    height: 132%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .rcard__mark--line {
+    top: auto;
+    bottom: -12px;
+    height: 16px;
+    left: 4px;
+    width: 64%;
+  }
+  .rcard__meta {
+    padding-left: 10px;
+    font-size: 0.8125rem;
+    color: var(--color-ink-500);
+  }
+  .rcard :global(.ripple) {
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    margin: -160px 0 0 -160px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(79, 142, 219, 0.35), transparent);
+    pointer-events: none;
+  }
+  .cards__progress {
+    height: 2px;
+    margin: 4px var(--gutter) 0;
+    border-radius: 2px;
+    background: rgba(174, 205, 244, 0.18);
+    overflow: hidden;
+  }
+  .cards__progress span {
+    display: block;
+    height: 100%;
+    background: var(--color-blue-400);
+    transform-origin: 0 50%;
+    transform: scaleX(0.2);
+  }
+
+  /* ---------- Рекорд ---------- */
+  .record {
+    position: relative;
+    display: grid;
+    gap: 8px;
+    margin-top: clamp(88px, 12vw, 160px);
+    padding-top: clamp(32px, 4vw, 48px);
+    border-top: 1px solid rgba(174, 205, 244, 0.2);
+  }
+  .record__year {
+    font-family: var(--font-serif);
+    font-size: clamp(6rem, 3rem + 14vw, 17rem);
+    line-height: 0.8;
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(174, 205, 244, 0.45);
+    font-variant-numeric: lining-nums;
+  }
+  .record__hundreds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 22px;
+    padding: 0;
+    list-style: none;
+  }
+  .record__hundreds li {
+    display: grid;
+    place-items: center;
+    width: clamp(58px, 6vw, 76px);
+    height: clamp(58px, 6vw, 76px);
+    border-radius: 50%;
+    border: 1.5px solid var(--color-pen-red);
+    background: rgba(217, 71, 63, 0.08);
+    color: #ff8a80;
+    font-family: var(--font-hand);
+    font-size: clamp(1.25rem, 1rem + 0.6vw, 1.6rem);
+  }
+  .record__hundreds li:nth-child(odd) {
+    rotate: -6deg;
+  }
+  .record__hundreds li:nth-child(even) {
+    rotate: 5deg;
+  }
+  .record__title {
+    margin: 0;
+    font-size: var(--fs-h3);
+    line-height: 1.1;
+    max-width: 18ch;
+  }
+  .record__text {
+    margin: 12px 0 0;
+    max-width: 44ch;
+    color: rgba(232, 241, 253, 0.72);
+  }
+  .record__cta {
+    margin-top: 28px;
+  }
+
+  @media (min-width: 1024px) {
+    .results {
+      border-radius: 64px 64px 0 0;
+      margin-top: -64px;
+    }
+    .results__grid {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: clamp(48px, 7vw, 120px);
+      align-items: start;
+    }
+    .results__media {
+      order: 0;
+      position: sticky;
+      top: max(96px, calc(50svh - min(30vw, 330px, (100svh - 150px) * 0.4737) * 1.055));
+    }
+    .phone {
+      width: min(30vw, 330px, calc((100svh - 150px) * 0.4737));
+    }
+    .cards {
+      margin: 48px 0 0;
+    }
+    .cards__list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      padding: 0;
+      overflow: visible;
+    }
+    .rcard {
+      padding: 28px 28px 30px;
+    }
+    .rcard:nth-child(even) {
+      translate: 0 64px;
+    }
+    .cards__progress {
+      display: none;
+    }
+    .record {
+      grid-template-columns: auto 1fr;
+      align-items: end;
+      gap: clamp(32px, 5vw, 80px);
+    }
+  }
+</style>

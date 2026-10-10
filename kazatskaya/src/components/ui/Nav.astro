@@ -1,0 +1,350 @@
+---
+import { NAV, LINKS, FOOTER } from '@/content/content';
+import { tg } from '@/lib/links';
+import Button from './Button.astro';
+import Mono from './Mono.astro';
+---
+
+<div class="progress" aria-hidden="true"><span data-progress></span></div>
+
+<header class="nav" data-nav>
+  <div class="nav__pill glass">
+    <a class="nav__logo" href="#top">
+      <Mono class="mono" />
+      <span class="sr-only">Анна </span><span class="nav__name">Казацкая</span><span class="sr-only">
+        — в начало страницы</span
+      >
+    </a>
+
+    <nav class="nav__links" aria-label="Разделы">
+      <ul>
+        {
+          NAV.map((item) => (
+            <li>
+              <a href={item.href} data-nav-link>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <span class="nav__indicator" data-nav-indicator aria-hidden="true"></span>
+    </nav>
+
+    <div class="nav__cta">
+      <Button href={tg()} size="sm" icon="tg" goal="tg_nav" cursor="Написать">
+        <span class="nav__cta-long">Написать в Telegram</span><span class="nav__cta-short">Написать</span>
+      </Button>
+    </div>
+
+    <button
+      class="nav__burger"
+      type="button"
+      aria-expanded="false"
+      aria-controls="menu"
+      aria-label="Открыть меню"
+      data-menu-toggle
+    >
+      <span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="menu" id="menu" data-menu hidden>
+  <div class="menu__backdrop" data-menu-close></div>
+  <div class="menu__sheet paper-grid" role="dialog" aria-modal="true" aria-label="Меню">
+    <span class="menu__grip" aria-hidden="true"></span>
+    <nav aria-label="Разделы (меню)">
+      <ul class="menu__list">
+        {
+          NAV.map((item) => (
+            <li class="menu__item">
+              <a href={item.href} data-menu-link>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <div class="menu__foot menu__item">
+      <Button href={tg()} icon="tg" goal="tg_menu">Написать Анне в Telegram</Button>
+      <div class="menu__channels">
+        <a class="link" href={LINKS.channel} target="_blank" rel="noopener">Канал «ЕГЭ русский язык | 90+»</a>
+        <a class="link" href={LINKS.results} target="_blank" rel="noopener">Результаты и отзывы</a>
+      </div>
+      <p class="menu__motto hand">{FOOTER.joke}</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 2px;
+    z-index: 120;
+    pointer-events: none;
+  }
+  .progress span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-blue-400), var(--color-blue-600));
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+  }
+
+  .nav {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    padding-inline: 10px;
+    pointer-events: none;
+    transition: transform 0.45s var(--ease-expo);
+  }
+  .nav.is-hidden {
+    transform: translateY(calc(-100% - 20px));
+  }
+  .nav__pill {
+    pointer-events: auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    max-width: 1120px;
+    min-height: 60px;
+    padding: 8px 8px 8px 10px;
+    border-radius: 999px;
+    transition:
+      box-shadow var(--dur-ui) var(--ease-out),
+      background-color var(--dur-ui) var(--ease-out);
+  }
+  .nav:not(.is-scrolled) .nav__pill {
+    box-shadow: var(--shadow-sm);
+  }
+  .nav__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding-right: 10px;
+    border-radius: 999px;
+  }
+  .nav__logo :global(.mono) {
+    flex: none;
+    width: 40px;
+    height: 40px;
+  }
+  .nav__name {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .nav__links {
+    position: relative;
+    display: none;
+    margin-inline: auto;
+  }
+  .nav__links ul {
+    display: flex;
+    gap: 2px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nav__links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--color-ink-500);
+    transition: color var(--dur-ui) var(--ease-out);
+  }
+  .nav__links a:hover,
+  .nav__links a.is-active {
+    color: var(--color-navy-900);
+  }
+  .nav__links a:active {
+    opacity: 0.6;
+  }
+  .nav__indicator {
+    position: absolute;
+    left: 0;
+    bottom: 6px;
+    width: 100px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-blue-500);
+    transform-origin: 0 50%;
+    transform: translateX(var(--x, 0)) scaleX(var(--s, 0));
+    opacity: var(--o, 0);
+    transition:
+      transform 0.5s var(--ease-expo),
+      opacity var(--dur-ui);
+  }
+  .nav__cta {
+    margin-left: auto;
+  }
+  .nav__cta :global(.btn__label) {
+    white-space: nowrap;
+  }
+  .nav__cta-long {
+    display: none;
+  }
+  .nav__burger {
+    display: grid;
+    place-content: center;
+    gap: 6px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-sky-100);
+    transition:
+      transform var(--dur-press) var(--ease-out),
+      background-color var(--dur-ui);
+  }
+  .nav__burger:active {
+    transform: scale(0.94);
+  }
+  .nav__burger span {
+    display: block;
+    width: 18px;
+    height: 1.75px;
+    border-radius: 2px;
+    background: var(--color-navy-900);
+    transition: transform 0.4s var(--ease-expo);
+  }
+  .nav__burger[aria-expanded='true'] span:first-child {
+    transform: translateY(3.9px) rotate(45deg);
+  }
+  .nav__burger[aria-expanded='true'] span:last-child {
+    transform: translateY(-3.9px) rotate(-45deg);
+  }
+
+  /* Узкие телефоны (360–399 px): пилюля не должна быть шире экрана */
+  @media (max-width: 399px) {
+    .nav__pill {
+      gap: 4px;
+      padding-left: 8px;
+    }
+    .nav__logo {
+      gap: 8px;
+      padding-right: 4px;
+    }
+    .nav__name {
+      font-size: 1.2rem;
+    }
+    .nav__cta :global(.btn) {
+      padding: 0 16px;
+    }
+    .nav__cta :global(.btn__icon) {
+      display: none;
+    }
+  }
+  @media (min-width: 560px) {
+    .nav__cta-long {
+      display: inline;
+    }
+    .nav__cta-short {
+      display: none;
+    }
+  }
+  @media (min-width: 1024px) {
+    .nav {
+      top: 16px;
+    }
+    .nav__links {
+      display: block;
+    }
+    .nav__cta {
+      margin-left: 0;
+    }
+    .nav__burger {
+      display: none;
+    }
+  }
+
+  /* ---------- Мобильное меню-шторка ---------- */
+  .menu {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+  }
+  .menu[hidden] {
+    display: none;
+  }
+  .menu__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(18, 38, 74, 0.28);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  .menu__sheet {
+    position: absolute;
+    inset: 0 0 auto 0;
+    max-height: 100svh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: calc(max(10px, env(safe-area-inset-top)) + 84px) var(--gutter) 28px;
+    background-color: var(--color-sky-50);
+    border-radius: 0 0 32px 32px;
+    box-shadow: var(--shadow-lg);
+    touch-action: pan-y;
+  }
+  .menu__grip {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    width: 44px;
+    height: 4px;
+    margin-left: -22px;
+    border-radius: 4px;
+    background: var(--line-strong);
+  }
+  .menu__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .menu__list a {
+    display: flex;
+    align-items: center;
+    min-height: 60px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-serif);
+    font-size: clamp(2.1rem, 9vw, 3rem);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .menu__list a:active {
+    color: var(--color-blue-600);
+  }
+  .menu__foot {
+    display: grid;
+    gap: 16px;
+    margin-top: 28px;
+  }
+  .menu__foot :global(.btn) {
+    width: 100%;
+  }
+  .menu__channels {
+    display: grid;
+  }
+  .menu__motto {
+    margin: 4px 0 8px;
+    font-size: 1.4rem;
+    color: var(--color-ink-500);
+  }
+</style>

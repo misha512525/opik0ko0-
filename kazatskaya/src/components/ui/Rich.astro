@@ -1,0 +1,13 @@
+---
+/** Текст из content.ts с типографикой и мини-разметкой (*курсив*, ==маркер==). */
+import type { HTMLTag } from 'astro/types';
+import { rich } from '@/lib/typo';
+interface Props {
+  text: string;
+  as?: HTMLTag;
+  class?: string;
+}
+const { text, as: Tag = 'span', class: cls } = Astro.props;
+---
+
+<Tag class={cls} set:html={rich(text)} />

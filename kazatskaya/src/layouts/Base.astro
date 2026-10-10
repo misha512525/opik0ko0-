@@ -1,0 +1,124 @@
+---
+import '@/styles/global.css';
+import { LINKS, SEO, MATERIALS, YEARS } from '@/content/content';
+import Metrika from '@/components/ui/Metrika.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+}
+const { title = SEO.title, description = SEO.description, noindex = false } = Astro.props;
+const site = Astro.site ?? new URL('https://kazatskaya.netlify.app');
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImage = new URL('/og.jpg', site).href;
+const ymId = import.meta.env.PUBLIC_YM_ID;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': `${site.href}#anna`,
+      name: 'Анна Андреевна Казацкая',
+      jobTitle: 'Репетитор по русскому языку и литературе',
+      description: `${YEARS} лет готовит к ЕГЭ и ОГЭ по русскому языку и литературе.`,
+      knowsAbout: [
+        'ЕГЭ по русскому языку',
+        'ОГЭ по русскому языку',
+        'ЕГЭ по литературе',
+        'ОГЭ по литературе',
+      ],
+      homeLocation: { '@type': 'Place', name: 'Москва' },
+      url: site.href,
+      image: ogImage,
+      sameAs: [LINKS.channel, LINKS.results],
+    },
+    {
+      '@type': 'Service',
+      name: 'Подготовка к ЕГЭ и ОГЭ по русскому языку и литературе',
+      serviceType: 'Репетиторство',
+      provider: { '@id': `${site.href}#anna` },
+      inLanguage: 'ru',
+      offers: {
+        '@type': 'Offer',
+        name: 'Пробные КИМы ЕГЭ: комплект из двух вариантов с ответами',
+        price: MATERIALS.kim.price.replace(/\D/g, ''),
+        priceCurrency: 'RUB',
+        url: LINKS.channel,
+      },
+    },
+  ],
+};
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#F5F9FF" />
+    <meta name="color-scheme" content="light" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:site_name" content="Анна Казацкая" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={SEO.ogAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <link
+      rel="preload"
+      href="/fonts/cormorant-garamond-cyrillic-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/manrope-cyrillic-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <slot name="head" />
+
+    <script is:inline>
+      // До первой отрисовки: включаем сценарии анимаций без мигания контента
+      (() => {
+        const d = document.documentElement;
+        d.classList.add('js');
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('motion-ok');
+        try {
+          if (sessionStorage.getItem('ak-intro')) d.classList.add('intro-seen');
+        } catch {
+          /* приватный режим — интро покажется */
+        }
+        // Страховка: если скрипты не загрузились — показываем всё без анимаций
+        setTimeout(() => {
+          if (!window.__akReady) d.classList.remove('motion-ok');
+        }, 4000);
+      })();
+    </script>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    {ymId && <Metrika id={Number(ymId)} />}
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

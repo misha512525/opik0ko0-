@@ -1,0 +1,286 @@
+---
+import { SERVICES } from '@/content/content';
+import { tg } from '@/lib/links';
+import { typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+import Icon from '../ui/Icon.astro';
+
+const panels = [
+  { id: 'students', label: SERVICES.tabs[0], items: SERVICES.students },
+  { id: 'teachers', label: SERVICES.tabs[1], items: SERVICES.teachers },
+];
+---
+
+<section class="services" id="services" aria-labelledby="services-title" data-services>
+  <div class="container">
+    <div class="services__head">
+      <h2 id="services-title" class="h2" data-reveal><Rich text={SERVICES.title} /></h2>
+
+      <div class="seg" role="tablist" aria-label="Для кого" data-reveal>
+        <span class="seg__pill" data-seg-pill aria-hidden="true"></span>
+        {
+          panels.map((p, i) => (
+            <button
+              class="seg__btn"
+              role="tab"
+              type="button"
+              id={`tab-${p.id}`}
+              aria-controls={`panel-${p.id}`}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              tabindex={i === 0 ? 0 : -1}
+              data-seg-tab
+            >
+              {p.label}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="panels" data-panels>
+      {
+        panels.map((p, i) => (
+          <div
+            class:list={['panel', i === 0 && 'is-active']}
+            role="tabpanel"
+            id={`panel-${p.id}`}
+            aria-labelledby={`tab-${p.id}`}
+            data-panel
+            inert={i !== 0}
+          >
+            {p.items.map((s, k) => (
+              <article class:list={['svc', `svc--${k}`]} data-card data-svc>
+                <span class="svc__mark">{s.mark}</span>
+                <h3 class="svc__title">{typo(s.title)}</h3>
+                <p class="svc__text">{typo(s.text)}</p>
+                <a
+                  class="svc__cta"
+                  href={tg(s.message)}
+                  target="_blank"
+                  rel="noopener"
+                  data-goal={`tg_${p.id}`}
+                >
+                  <span>{s.cta}</span>
+                  <Icon name="arrow" size={16} />
+                </a>
+              </article>
+            ))}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .services {
+    padding-block: var(--section-y);
+    background: linear-gradient(180deg, var(--color-sky-50), var(--color-sky-100) 55%, var(--color-sky-50));
+  }
+  .services__head {
+    display: grid;
+    gap: 28px;
+    align-items: end;
+  }
+
+  /* ---------- Segmented control ---------- */
+  .seg {
+    position: relative;
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    justify-self: start;
+    padding: 5px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow:
+      inset 0 0 0 1px var(--line),
+      var(--shadow-sm);
+  }
+  .seg__pill {
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 5px;
+    width: calc(50% - 5px);
+    border-radius: 999px;
+    background: var(--color-navy-900);
+    transform: translateX(calc(var(--seg, 0) * 100%));
+    transition: transform 0.42s var(--ease-expo);
+  }
+  .seg__btn {
+    position: relative;
+    z-index: 1;
+    min-width: 132px;
+    min-height: 48px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    font-weight: 600;
+    color: var(--color-ink-500);
+    transition:
+      color var(--dur-ui) var(--ease-out),
+      transform var(--dur-press) var(--ease-out);
+  }
+  .seg__btn[aria-selected='true'] {
+    color: #fff;
+  }
+  .seg__btn:active {
+    transform: scale(0.97);
+  }
+
+  /* ---------- Панели: стопка в одной ячейке грида — высота не прыгает ---------- */
+  .panels {
+    display: grid;
+    margin-top: clamp(36px, 5vw, 64px);
+  }
+  .panel {
+    grid-area: 1 / 1;
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+  .panel:not(.is-active) {
+    visibility: hidden;
+  }
+  :global(html:not(.js)) .panel {
+    position: static;
+    visibility: visible;
+  }
+
+  .svc {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    padding: 26px 24px 18px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition:
+      box-shadow var(--dur-ui) var(--ease-out),
+      border-color var(--dur-ui) var(--ease-out),
+      transform var(--dur-press) var(--ease-out);
+  }
+  .svc::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(
+      320px circle at var(--mx, 50%) var(--my, 0%),
+      rgba(174, 205, 244, 0.45),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity var(--dur-ui);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .svc:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--line-strong);
+    }
+    .svc:hover::after {
+      opacity: 1;
+    }
+  }
+  .svc:global(.is-center) {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-md);
+  }
+  .svc:global(.is-center)::after {
+    opacity: 0.7;
+  }
+  .svc:active {
+    transform: scale(0.985);
+  }
+  .svc :global(.ripple) {
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    margin: -180px 0 0 -180px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(79, 142, 219, 0.25), transparent);
+    pointer-events: none;
+  }
+  .svc__mark {
+    justify-self: start;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(2.6rem, 2rem + 2vw, 4rem);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--color-blue-500);
+  }
+  .svc__title {
+    margin: 6px 0 0;
+    font-size: var(--fs-h3);
+    line-height: 1.05;
+    max-width: 16ch;
+  }
+  .svc__text {
+    margin: 0;
+    max-width: 44ch;
+    color: var(--color-ink-500);
+  }
+  .svc__cta {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    gap: 8px;
+    min-height: 48px;
+    margin-top: 4px;
+    font-weight: 600;
+    color: var(--color-blue-800);
+  }
+  .svc__cta :global(svg) {
+    transition: transform 0.4s var(--ease-expo);
+  }
+  .svc__cta:hover :global(svg) {
+    transform: translate(3px, -3px);
+  }
+  .svc__cta:active {
+    opacity: 0.7;
+  }
+  /* Первая карточка — «главная»: на бумаге в клетку */
+  .svc--0 {
+    background-color: #fff;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  @media (min-width: 768px) {
+    .panel {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+    .svc--0 {
+      grid-row: span 2;
+      padding: 36px 34px 26px;
+    }
+    .svc--0 .svc__mark {
+      font-size: clamp(4rem, 3rem + 4vw, 7.5rem);
+    }
+    .svc--0 .svc__title {
+      font-size: clamp(2rem, 1.4rem + 1.8vw, 3.2rem);
+    }
+  }
+  @media (min-width: 1024px) {
+    .services__head {
+      grid-template-columns: 1fr auto;
+    }
+    .seg {
+      justify-self: end;
+    }
+    .panel {
+      grid-template-columns: 1.2fr 1fr;
+    }
+  }
+</style>

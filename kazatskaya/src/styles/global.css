@@ -1,0 +1,580 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   Шрифты (self-hosted, кириллица + латиница, display: swap).
+   Латинские файлы урезаны до цифр, ASCII и типографских знаков — scripts/subset-fonts.sh
+   ============================================================ */
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 700;
+  src: url('/fonts/cormorant-garamond-cyrillic-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 700;
+  src: url('/fonts/cormorant-garamond-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0020-007E, U+00A0, U+00AB, U+00B7, U+00BB, U+2013, U+2014, U+2026, U+20BD;
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 300 700;
+  src: url('/fonts/cormorant-garamond-cyrillic-wght-italic.woff2') format('woff2-variations');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 300 700;
+  src: url('/fonts/cormorant-garamond-latin-wght-italic.woff2') format('woff2-variations');
+  unicode-range: U+0020-007E, U+00A0, U+00AB, U+00B7, U+00BB, U+2013, U+2014, U+2026, U+20BD;
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/fonts/manrope-cyrillic-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/fonts/manrope-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0020-007E, U+00A0, U+00AB, U+00B7, U+00BB, U+2013, U+2014, U+2026, U+20BD;
+}
+@font-face {
+  font-family: 'Marck';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/marck-script-cyrillic-400-normal.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Marck';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/marck-script-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0020-007E, U+00A0, U+00AB, U+00B7, U+00BB, U+2013, U+2014, U+2026, U+20BD;
+}
+
+/* ============================================================
+   Токены: CSS-переменные + Tailwind-утилиты (bg-sky-50, text-navy-900…)
+   ============================================================ */
+@theme static {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-sky-50: #f5f9ff;
+  --color-sky-100: #e8f1fd;
+  --color-sky-200: #d3e5fa;
+  --color-blue-300: #aecdf4;
+  --color-blue-400: #82b2ec;
+  --color-blue-500: #4f8edb;
+  --color-blue-600: #3a74bf;
+  --color-blue-800: #1f4a85;
+  --color-navy-900: #12264a;
+  --color-navy-950: #0c1a35;
+  --color-ink-500: #51627f;
+  --color-sand-100: #f3eadf;
+  --color-sand-300: #e6d3bb;
+  --color-highlight: #ffe08a;
+  /* «Ручки» учителя: только для пометок — галочки, обводки, зачёркивания */
+  --color-pen-red: #d9473f;
+  --color-pen-green: #2f9e6b;
+  /* те же ручки для мелкого текста — контраст AA ≥ 4.5 */
+  --color-pen-red-ink: #b5352e;
+  --color-pen-green-ink: #1f7a4e;
+
+  --font-serif: 'Cormorant', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-hand: 'Marck', 'Segoe Script', cursive;
+
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+:root {
+  --line: rgba(79, 142, 219, 0.18);
+  --line-strong: rgba(79, 142, 219, 0.32);
+  --grid: rgba(79, 142, 219, 0.085);
+  --shadow-sm: 0 1px 2px rgba(18, 38, 74, 0.06), 0 2px 8px -2px rgba(31, 74, 133, 0.08);
+  --shadow-md:
+    0 1px 2px rgba(18, 38, 74, 0.05), 0 8px 24px -8px rgba(31, 74, 133, 0.16),
+    0 24px 48px -24px rgba(79, 142, 219, 0.22);
+  --shadow-lg:
+    0 2px 4px rgba(18, 38, 74, 0.05), 0 16px 40px -12px rgba(31, 74, 133, 0.22),
+    0 48px 96px -40px rgba(79, 142, 219, 0.35);
+
+  --gutter: clamp(16px, 4.2vw, 48px);
+  --maxw: 1320px;
+  --nav-h: 64px;
+  --section-y: clamp(88px, 13vw, 176px);
+
+  /* Fluid-типографика */
+  --fs-hero: clamp(2.6rem, 1.2rem + 6.4vw, 8rem);
+  --fs-h2: clamp(2.35rem, 1.4rem + 4.2vw, 5.5rem);
+  --fs-h3: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem);
+  --fs-lead: clamp(1.0625rem, 0.98rem + 0.4vw, 1.3125rem);
+  --fs-body: clamp(1rem, 0.96rem + 0.18vw, 1.0625rem);
+  --fs-small: 0.875rem;
+
+  --dur-press: 120ms;
+  --dur-ui: 240ms;
+  --dur-reveal: 900ms;
+}
+
+/* ============================================================
+   База
+   ============================================================ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--nav-h) + 24px);
+    background: var(--color-sky-50);
+    color: var(--color-navy-900);
+    font-family: var(--font-sans);
+    font-size: 100%;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    hanging-punctuation: first;
+  }
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-stopped {
+    overflow: clip;
+  }
+  body {
+    min-height: 100svh;
+    font-size: var(--fs-body);
+    line-height: 1.6;
+    overflow-x: clip;
+    font-feature-settings: 'kern', 'liga';
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  h2 em,
+  h1 em,
+  h3 em {
+    font-style: italic;
+    font-weight: 500;
+  }
+  p,
+  li,
+  dd {
+    text-wrap: pretty;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  img,
+  video,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+  ::selection {
+    background: var(--color-highlight);
+    color: var(--color-navy-900);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-blue-500);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+/* ============================================================
+   Общие компоненты
+   ============================================================ */
+@layer components {
+  .container {
+    width: 100%;
+    max-width: calc(var(--maxw) + var(--gutter) * 2);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .skip-link {
+    position: fixed;
+    left: 12px;
+    top: 12px;
+    z-index: 200;
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: var(--color-navy-900);
+    color: var(--color-sky-50);
+    transform: translateY(-160%);
+    transition: transform var(--dur-ui) var(--ease-out);
+  }
+  .skip-link:focus-visible {
+    transform: none;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Тетрадь в клетку */
+  .paper-grid {
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
+  }
+
+  /* Заголовок секции */
+  .h2 {
+    font-size: var(--fs-h2);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+  }
+  .h2 em {
+    color: var(--color-blue-600);
+  }
+  .lead {
+    font-size: var(--fs-lead);
+    line-height: 1.55;
+    color: var(--color-ink-500);
+    max-width: 38ch;
+  }
+  .hand {
+    font-family: var(--font-hand);
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  /* «Маркер» — жёлтое выделение, прорисовывается слева направо */
+  .hl {
+    position: relative;
+    background: none;
+    color: inherit;
+    white-space: nowrap;
+  }
+  .hl > span {
+    position: relative;
+    z-index: 1;
+  }
+  .hl::before {
+    content: '';
+    position: absolute;
+    inset: 52% -0.12em 4% -0.12em;
+    background: var(--color-highlight);
+    border-radius: 0.2em 0.35em 0.25em 0.4em;
+    transform-origin: 0 50%;
+    transform: scaleX(var(--hl, 1));
+    transition: transform 0.9s var(--ease-expo);
+  }
+  .motion-ok .hl:not(.is-drawn)::before {
+    --hl: 0;
+  }
+
+  /* ---------- Кнопки ---------- */
+  .btn {
+    --btn-h: 56px;
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: var(--btn-h);
+    padding: 0 26px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: -0.005em;
+    line-height: 1.15;
+    max-width: 100%;
+    overflow: hidden;
+    user-select: none;
+    transition:
+      transform var(--dur-press) var(--ease-out),
+      background-color var(--dur-ui) var(--ease-out),
+      box-shadow var(--dur-ui) var(--ease-out),
+      color var(--dur-ui) var(--ease-out);
+  }
+  .btn:active {
+    transform: scale(0.97);
+  }
+  .btn__label {
+    position: relative;
+    z-index: 2;
+    white-space: normal;
+    text-align: center;
+  }
+  .btn__icon {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin-right: -14px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  .btn__icon svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.42s var(--ease-expo);
+  }
+  .btn__icon svg + svg {
+    position: absolute;
+    transform: translate(-150%, 150%);
+  }
+  .btn.is-launch .btn__icon svg:first-child,
+  .btn:hover .btn__icon svg:first-child {
+    transform: translate(150%, -150%);
+  }
+  .btn.is-launch .btn__icon svg + svg,
+  .btn:hover .btn__icon svg + svg {
+    transform: none;
+  }
+  @media (hover: none) {
+    .btn:hover .btn__icon svg:first-child {
+      transform: none;
+    }
+    .btn:hover .btn__icon svg + svg {
+      transform: translate(-150%, 150%);
+    }
+  }
+
+  /* Белый текст на blue-500 даёт 3.4:1 — для AA кнопка на blue-600 (4.7:1) */
+  .btn--primary {
+    background: var(--color-blue-600);
+    color: #fff;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.35) inset,
+      0 10px 24px -10px rgba(58, 116, 191, 0.75),
+      0 2px 6px -2px rgba(18, 38, 74, 0.25);
+  }
+  .btn--primary .btn__icon {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn--primary:hover {
+      background: var(--color-blue-800);
+    }
+    .btn--ghost:hover {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow:
+        inset 0 0 0 1px var(--line-strong),
+        var(--shadow-sm);
+    }
+    .btn--dark:hover {
+      background: var(--color-blue-800);
+    }
+  }
+  /* Блик: по hover на десктопе, раз в ~6 c на тач-устройствах (класс ставит JS) */
+  .btn--primary::after {
+    content: '';
+    position: absolute;
+    inset: -20% auto -20% 0;
+    width: 40%;
+    z-index: 1;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: translateX(-160%) skewX(-18deg);
+    pointer-events: none;
+  }
+  .btn--primary.is-shine::after,
+  .btn--primary:hover::after {
+    transition: transform 0.9s var(--ease-in-out);
+    transform: translateX(360%) skewX(-18deg);
+  }
+  .btn--ghost {
+    background: rgba(255, 255, 255, 0.55);
+    color: var(--color-navy-900);
+    box-shadow: inset 0 0 0 1px var(--line);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+  .btn--ghost .btn__icon {
+    background: var(--color-sky-100);
+  }
+  .btn--dark {
+    background: var(--color-navy-900);
+    color: var(--color-sky-50);
+  }
+  .btn--dark .btn__icon {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .btn--light {
+    background: var(--color-sky-50);
+    color: var(--color-navy-900);
+  }
+  .btn--light .btn__icon {
+    background: var(--color-sky-200);
+  }
+  .btn--sm {
+    --btn-h: 44px;
+    padding: 0 18px;
+    font-size: 0.9375rem;
+  }
+  .btn--sm .btn__icon {
+    width: 26px;
+    height: 26px;
+    margin-right: -8px;
+  }
+
+  /* Текстовая ссылка с подчёркиванием-«правкой» */
+  .link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    font-weight: 600;
+    color: var(--color-blue-800);
+  }
+  .link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    height: 1.5px;
+    background: currentColor;
+    transform-origin: 100% 50%;
+    transform: scaleX(0.35);
+    opacity: 0.6;
+    transition:
+      transform 0.5s var(--ease-expo),
+      opacity var(--dur-ui);
+  }
+  .link:hover::after,
+  .link:focus-visible::after {
+    transform-origin: 0 50%;
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  .link:active {
+    opacity: 0.7;
+  }
+
+  /* Бейдж «№ 14» — номера заданий ЕГЭ как графический мотив */
+  .task-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.15em;
+    padding: 0.2em 0.65em 0.25em;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--color-blue-600);
+    background: rgba(255, 255, 255, 0.6);
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  /* Стеклянная карточка (со сплошным фолбэком) */
+  .glass {
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
+  }
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .glass {
+      background: rgba(255, 255, 255, 0.58);
+      -webkit-backdrop-filter: blur(18px) saturate(1.3);
+      backdrop-filter: blur(18px) saturate(1.3);
+    }
+  }
+
+  /* Рукописные пометки (SVG stroke) */
+  .pen {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .pen--red {
+    stroke: var(--color-pen-red);
+  }
+  .pen--green {
+    stroke: var(--color-pen-green);
+  }
+
+  /* TODO-плейсхолдеры (видны только с PUBLIC_SHOW_TODO=1) */
+  .todo {
+    outline: 2px dashed #e5484d !important;
+    outline-offset: 4px;
+    position: relative;
+  }
+  .todo::after {
+    content: 'TODO: ' attr(data-todo);
+    position: absolute;
+    top: -12px;
+    right: 8px;
+    z-index: 5;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #e5484d;
+    color: #fff;
+    font: 600 11px/1.4 var(--font-sans);
+    white-space: nowrap;
+  }
+
+  /* Появление при скролле (класс ставится только когда JS + motion разрешены) */
+  .motion-ok [data-reveal]:not([data-revealed]) {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: всё статично и читаемо */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

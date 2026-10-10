@@ -1,0 +1,130 @@
+---
+import { PROCESS } from '@/content/content';
+import { typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+import Todo from '../ui/Todo.astro';
+---
+
+<section class="process" id="process" aria-labelledby="process-title">
+  <div class="container process__grid">
+    <div class="process__head">
+      <h2 id="process-title" class="h2" data-reveal><Rich text={PROCESS.title} /></h2>
+      <p class="lead process__lead" data-reveal>{typo(PROCESS.lead)}</p>
+    </div>
+
+    <Todo note="уточнить процесс у Анны">
+      <div class="steps" data-steps>
+        <span class="steps__line" aria-hidden="true"><span data-steps-line></span></span>
+        <ol class="steps__list">
+          {
+            PROCESS.steps.map((s, i) => (
+              <li class="step" data-step>
+                <span class="step__node" aria-hidden="true">
+                  <svg viewBox="0 0 40 40">
+                    <path d="M20 4 C30 3 37 11 36 21 C35 31 27 37 18 36 C9 35 3 28 4 18 C5 10 12 5 20 4Z" />
+                  </svg>
+                  <span>{i + 1}</span>
+                </span>
+                <div class="step__body">
+                  <h3 class="step__title">{s.title}</h3>
+                  <p class="step__text">{typo(s.text)}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </Todo>
+  </div>
+</section>
+
+<style>
+  .process {
+    padding-block: var(--section-y);
+  }
+  .process__grid {
+    display: grid;
+    gap: 44px;
+  }
+  .process__lead {
+    margin: 20px 0 0;
+  }
+  .steps {
+    position: relative;
+  }
+  .steps__list {
+    display: grid;
+    gap: 34px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .steps__line {
+    position: absolute;
+    left: 23px;
+    top: 24px;
+    bottom: 24px;
+    width: 2px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+  .steps__line span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(var(--color-blue-500), var(--color-blue-300));
+    transform-origin: 50% 0;
+  }
+  .step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .step__node {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+  }
+  .step__node svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    fill: var(--color-navy-900);
+  }
+  .step__node span {
+    position: relative;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.35rem;
+    color: var(--color-sky-50);
+    font-variant-numeric: lining-nums;
+  }
+  .step__title {
+    margin: 6px 0 8px;
+    font-size: var(--fs-h3);
+    line-height: 1.05;
+  }
+  .step__text {
+    margin: 0;
+    max-width: 42ch;
+    color: var(--color-ink-500);
+  }
+  @media (min-width: 1024px) {
+    .process__grid {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      gap: clamp(48px, 7vw, 120px);
+      align-items: start;
+    }
+    .process__head {
+      position: sticky;
+      top: calc(var(--nav-h) + 72px);
+    }
+    .steps__list {
+      gap: 56px;
+    }
+  }
+</style>

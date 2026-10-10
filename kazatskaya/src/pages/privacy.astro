@@ -1,0 +1,48 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base
+  title="Политика конфиденциальности — Анна Казацкая"
+  description="Как сайт обращается с данными посетителей."
+  noindex
+>
+  <main id="main" class="privacy container">
+    <a class="link" href="/">← На главную</a>
+    <h1>Политика конфиденциальности</h1>
+    <p class="note">TODO: текст-шаблон, проверить юристом перед публикацией.</p>
+    <h2>Какие данные собирает сайт</h2>
+    <p>
+      Сайт не собирает и не хранит персональные данные: на нём нет форм, которые что-либо отправляют.
+      Конструктор сообщения лишь составляет текст и открывает Telegram — что отправить, вы решаете сами.
+    </p>
+    <h2>Аналитика</h2>
+    <p>
+      Если на сайте подключена Яндекс.Метрика, она обезличенно учитывает посещения и использует файлы cookie.
+      Отключить cookie можно в настройках браузера.
+    </p>
+    <h2>Связь</h2>
+    <p>По вопросам о данных — напишите Анне Казацкой в Telegram.</p>
+  </main>
+</Base>
+
+<style>
+  .privacy {
+    max-width: 760px;
+    padding-block: 64px 96px;
+  }
+  .privacy h1 {
+    margin: 24px 0 8px;
+    font-size: clamp(2.4rem, 1.6rem + 3vw, 4rem);
+  }
+  .privacy h2 {
+    margin: 40px 0 8px;
+    font-size: 1.8rem;
+  }
+  .privacy p {
+    color: var(--color-ink-500);
+  }
+  .note {
+    font-style: italic;
+  }
+</style>

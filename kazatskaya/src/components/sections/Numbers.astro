@@ -1,0 +1,115 @@
+---
+import { NUMBERS } from '@/content/content';
+import { typo } from '@/lib/typo';
+---
+
+<section class="numbers" aria-label="Цифры">
+  <div class="container">
+    <ul class="numbers__list">
+      {
+        NUMBERS.map((n, i) => (
+          <li class:list={['stat', `stat--${i}`]} data-stat>
+            <span class="stat__rule" data-stat-rule aria-hidden="true" />
+            <span class="stat__value">
+              <span class="stat__num" data-count={n.value}>
+                {n.value}
+              </span>
+              {n.value === 100 && (
+                <svg class="stat__circle" viewBox="0 0 300 160" aria-hidden="true" data-stat-circle>
+                  <path
+                    class="pen pen--red"
+                    stroke-width="3"
+                    d="M54 116 C20 92 22 46 76 26 C130 6 222 10 266 46 C298 74 282 122 214 140 C150 156 76 150 40 120 C24 106 22 88 32 74"
+                  />
+                </svg>
+              )}
+            </span>
+            <span class="stat__label">{typo(n.label)}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .numbers {
+    padding-block: clamp(72px, 10vw, 140px);
+  }
+  .numbers__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 44px 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .stat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 22px;
+  }
+  .stat__rule {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: var(--line-strong);
+    transform-origin: 0 50%;
+  }
+  .stat__value {
+    position: relative;
+    display: inline-flex;
+    align-self: flex-start;
+  }
+  .stat__num {
+    display: inline-block;
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: clamp(4.5rem, 2.5rem + 9vw, 10.5rem);
+    line-height: 0.82;
+    letter-spacing: -0.045em;
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--color-navy-900);
+  }
+  .stat--2 .stat__num {
+    color: var(--color-blue-500);
+  }
+  .stat__circle {
+    position: absolute;
+    left: -16%;
+    top: -22%;
+    width: 132%;
+    height: 144%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .stat__label {
+    max-width: 22ch;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--color-ink-500);
+  }
+  @media (min-width: 1024px) {
+    .numbers__list {
+      grid-template-columns: 0.8fr 1fr 1.25fr 0.8fr;
+      gap: 32px;
+    }
+    .stat {
+      padding-top: 28px;
+    }
+    .stat--2 {
+      margin-top: -28px;
+    }
+    .stat--1,
+    .stat--3 {
+      margin-top: 56px;
+    }
+    .stat__label {
+      font-size: 1rem;
+    }
+  }
+</style>

@@ -1,0 +1,61 @@
+---
+import { getImage } from 'astro:assets';
+import Base from '@/layouts/Base.astro';
+import anna from '@/assets/anna-hero.jpg';
+import Nav from '@/components/ui/Nav.astro';
+import Preloader from '@/components/ui/Preloader.astro';
+import Cursor from '@/components/ui/Cursor.astro';
+import Hero from '@/components/sections/Hero.astro';
+import Marquee from '@/components/sections/Marquee.astro';
+import Numbers from '@/components/sections/Numbers.astro';
+import Results from '@/components/sections/Results.astro';
+import About from '@/components/sections/About.astro';
+import Services from '@/components/sections/Services.astro';
+import Process from '@/components/sections/Process.astro';
+import Materials from '@/components/sections/Materials.astro';
+import Trainer from '@/components/sections/Trainer.astro';
+import Reviews from '@/components/sections/Reviews.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Finale from '@/components/sections/Finale.astro';
+import Footer from '@/components/sections/Footer.astro';
+
+// Preload LCP-фото (AVIF) — те же ширины и sizes, что в Hero
+const widths = [440, 660, 888];
+const avif = await Promise.all(widths.map((w) => getImage({ src: anna, width: w, format: 'avif' })));
+const srcset = avif.map((img, i) => `${img.src} ${widths[i]}w`).join(', ');
+---
+
+<Base>
+  <link
+    slot="head"
+    rel="preload"
+    as="image"
+    type="image/avif"
+    imagesrcset={srcset}
+    imagesizes="(min-width: 1024px) 36vw, (min-width: 640px) 60vw, 88vw"
+    fetchpriority="high"
+  />
+  <a class="skip-link" href="#main">Перейти к содержанию</a>
+  <Preloader />
+  <Cursor />
+  <Nav />
+  <main id="main">
+    <Hero />
+    <Marquee />
+    <Numbers />
+    <Results />
+    <About />
+    <Services />
+    <Process />
+    <Materials />
+    <Trainer />
+    <Reviews />
+    <Faq />
+    <Finale />
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  import '@/scripts/main';
+</script>

@@ -1,0 +1,27 @@
+---
+/** Яндекс.Метрика. Подключается, только если задан PUBLIC_YM_ID. Цели — в src/scripts/ui/analytics.ts. */
+interface Props {
+  id: number;
+}
+const { id } = Astro.props;
+---
+
+<script is:inline define:vars={{ ymId: id }}>
+  // Очередь вызовов — сразу, сам тег — после простоя, чтобы не мешать первому экрану
+  window.ym =
+    window.ym ||
+    function (...args) {
+      (window.ym.a = window.ym.a || []).push(args);
+    };
+  window.ym.l = Date.now();
+  const loadYm = () => {
+    const tag = document.createElement('script');
+    tag.async = true;
+    tag.src = 'https://mc.yandex.ru/metrika/tag.js';
+    document.head.appendChild(tag);
+  };
+  if ('requestIdleCallback' in window) requestIdleCallback(loadYm, { timeout: 3000 });
+  else setTimeout(loadYm, 1500);
+  window.ym(ymId, 'init', { clickmap: true, trackLinks: true, accurateTrackBounce: true });
+  window.__ymId = ymId;
+</script>

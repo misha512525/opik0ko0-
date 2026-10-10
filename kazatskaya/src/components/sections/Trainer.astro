@@ -1,0 +1,431 @@
+---
+import { TRAINER } from '@/content/content';
+import { tg } from '@/lib/links';
+import { rich, typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+
+const total = TRAINER.items.length;
+---
+
+<section class="trainer" id="trainer" aria-labelledby="trainer-title">
+  <div class="container trainer__grid">
+    <div class="trainer__head">
+      <h2 id="trainer-title" class="h2" data-reveal><Rich text={TRAINER.title} /></h2>
+      <p class="lead" data-reveal>{typo(TRAINER.lead)}</p>
+    </div>
+
+    <div
+      class="tr"
+      data-trainer
+      data-total={total}
+      data-cta-base={tg('')}
+      data-cta-message={TRAINER.ctaMessage}
+      data-msg-perfect={TRAINER.result.perfect}
+      data-msg-good={TRAINER.result.good}
+      data-msg-weak={TRAINER.result.weak}
+    >
+      <div class="tr__bar">
+        <ol class="tr__dots" aria-hidden="true">
+          {TRAINER.items.map(() => <li data-dot />)}
+        </ol>
+        <span class="tr__count"><span data-tr-step>1</span> из {total}</span>
+      </div>
+
+      <div class="tr__stage" data-tr-stage>
+        {
+          TRAINER.items.map((item, i) => (
+            <fieldset
+              class:list={['q', i === 0 && 'is-active']}
+              data-q
+              data-correct={item.correct}
+              data-task={item.task}
+            >
+              <legend class="q__legend">
+                <span class="task-badge">{item.task}</span>
+                <span class="q__prompt">{item.prompt}. Как пишется верно?</span>
+              </legend>
+              <div class="q__options">
+                {item.options.map((opt, k) => (
+                  <button class="opt" type="button" data-opt={k}>
+                    <span class="opt__word">{opt}</span>
+                    <svg
+                      class="opt__strike"
+                      viewBox="0 0 200 24"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <path class="pen pen--red" stroke-width="3" d="M4 15 C50 10 110 13 196 8" />
+                    </svg>
+                    <svg class="opt__check" viewBox="0 0 28 24" aria-hidden="true">
+                      <path
+                        class="pen pen--green"
+                        stroke-width="3"
+                        d="M3 13 C6 15 9 18 11 21 C15 12 20 7 26 3"
+                      />
+                    </svg>
+                    <span class="opt__key" aria-hidden="true">
+                      {k + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p class="q__rule" data-rule hidden set:html={rich(item.rule)} />
+            </fieldset>
+          ))
+        }
+
+        <div class="final" data-final hidden>
+          <p class="final__score">
+            <span data-final-score>0</span><span class="final__of"> из {total}</span>
+          </p>
+          <p class="final__msg" data-final-msg></p>
+          <ul class="final__tasks" data-final-tasks></ul>
+          <div class="final__actions">
+            <Button
+              href={tg(TRAINER.ctaMessage.replace('{score}', '0'))}
+              icon="tg"
+              goal="trainer_cta"
+              data-final-cta=""
+            >
+              {TRAINER.cta}
+            </Button>
+            <button class="link final__restart" type="button" data-restart>{TRAINER.restart}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tr__foot">
+        <p class="tr__live" aria-live="polite" data-live></p>
+        <button class="btn btn--dark btn--sm tr__next" type="button" data-next hidden>
+          <span class="btn__label" data-next-label>Дальше</span>
+          <span class="btn__icon"><Icon name="arrow" size={16} /><Icon name="arrow" size={16} /></span>
+        </button>
+      </div>
+      <noscript><p class="tr__noscript">Тренажёр работает с включённым JavaScript.</p></noscript>
+    </div>
+  </div>
+</section>
+
+<style>
+  .trainer {
+    position: relative;
+    padding-block: var(--section-y);
+    background:
+      radial-gradient(60% 50% at 85% 20%, rgba(255, 255, 255, 0.7), transparent), var(--color-sand-100);
+  }
+  .trainer__grid {
+    display: grid;
+    gap: 36px;
+  }
+  .trainer__head :global(.lead) {
+    margin-top: 20px;
+  }
+  .tr {
+    position: relative;
+    padding: 20px 18px 18px;
+    border-radius: var(--radius-xl);
+    background-color: #fff;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    box-shadow: var(--shadow-lg);
+  }
+  .tr__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .tr__dots {
+    display: flex;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tr__dots li {
+    width: 22px;
+    height: 6px;
+    border-radius: 6px;
+    background: var(--color-sky-200);
+    transition:
+      background-color 0.3s var(--ease-out),
+      transform 0.3s var(--ease-out);
+  }
+  .tr__dots li:global(.is-current) {
+    background: var(--color-blue-500);
+  }
+  .tr__dots li:global(.is-right) {
+    background: var(--color-pen-green);
+  }
+  .tr__dots li:global(.is-wrong) {
+    background: var(--color-pen-red);
+  }
+  .tr__count {
+    font-size: var(--fs-small);
+    font-weight: 600;
+    color: var(--color-ink-500);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tr__stage {
+    display: grid;
+    margin-top: 22px;
+  }
+  .q,
+  .final {
+    grid-area: 1 / 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .q:not(.is-active) {
+    visibility: hidden;
+  }
+  .q__legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    font-weight: 500;
+    color: var(--color-ink-500);
+  }
+  .q__options {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .opt {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 72px;
+    padding: 12px 18px 12px 22px;
+    border: 1px solid var(--line-strong);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    text-align: left;
+    transition:
+      transform var(--dur-press) var(--ease-out),
+      border-color var(--dur-ui) var(--ease-out),
+      background-color var(--dur-ui) var(--ease-out),
+      box-shadow var(--dur-ui) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .opt:not(:disabled):hover {
+      border-color: var(--color-blue-500);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+  .opt:not(:disabled):active {
+    transform: scale(0.98);
+  }
+  .opt:disabled {
+    cursor: default;
+  }
+  .opt__word {
+    position: relative;
+    font-family: var(--font-serif);
+    font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.2rem);
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--color-navy-900);
+  }
+  .opt__strike {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    width: calc(100% - 80px);
+    max-width: 280px;
+    height: 24px;
+    margin-top: -12px;
+    overflow: visible;
+    opacity: 0;
+  }
+  .opt__check {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    width: 34px;
+    height: 30px;
+    margin-top: -15px;
+    overflow: visible;
+    opacity: 0;
+  }
+  .opt__key {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    border: 1px solid var(--line-strong);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-ink-500);
+    transition: opacity var(--dur-ui);
+  }
+  .opt:global(.is-right) {
+    border-color: var(--color-pen-green);
+    background: rgba(47, 158, 107, 0.07);
+  }
+  .opt:global(.is-wrong) {
+    border-color: rgba(217, 71, 63, 0.6);
+    background: rgba(217, 71, 63, 0.05);
+  }
+  .opt:global(.is-wrong) .opt__word {
+    color: var(--color-ink-500);
+  }
+  .opt:global(.is-right) .opt__check,
+  .opt:global(.is-wrong) .opt__strike {
+    opacity: 1;
+  }
+  .opt:global(.is-right) .opt__key,
+  .opt:global(.is-wrong) .opt__key {
+    opacity: 0;
+  }
+  .q__rule {
+    margin: 16px 0 0;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: var(--color-sky-100);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--color-navy-900);
+  }
+  .q__rule :global(em) {
+    font-style: normal;
+    font-weight: 700;
+    color: var(--color-pen-green-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+
+  .tr__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 52px;
+    margin-top: 16px;
+  }
+  .tr__live {
+    margin: 0;
+    font-weight: 600;
+  }
+  .tr__next {
+    margin-left: auto;
+  }
+
+  .final {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+  }
+  .final[hidden] {
+    display: none;
+  }
+  .final__score {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(4.5rem, 3rem + 6vw, 7.5rem);
+    line-height: 0.9;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--color-blue-500);
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  .final__of {
+    font-size: 0.4em;
+    letter-spacing: -0.01em;
+    color: var(--color-ink-500);
+  }
+  .final__msg {
+    margin: 0;
+    font-size: var(--fs-lead);
+    font-weight: 500;
+  }
+  .final__tasks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .final__tasks :global(li) {
+    padding: 0.35em 0.8em;
+    border-radius: 999px;
+    border: 1px solid rgba(217, 71, 63, 0.4);
+    color: var(--color-pen-red-ink);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.1rem;
+  }
+  .final__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    margin-top: 12px;
+  }
+  .final__restart {
+    border: 0;
+    background: none;
+    padding: 0;
+  }
+  .tr__noscript {
+    margin: 12px 0 0;
+    color: var(--color-ink-500);
+  }
+
+  @keyframes shake {
+    10%,
+    90% {
+      transform: translateX(-1px);
+    }
+    20%,
+    80% {
+      transform: translateX(3px);
+    }
+    30%,
+    50%,
+    70% {
+      transform: translateX(-6px);
+    }
+    40%,
+    60% {
+      transform: translateX(6px);
+    }
+  }
+  .opt:global(.is-shake) {
+    animation: shake 0.45s var(--ease-out);
+  }
+
+  @media (min-width: 640px) {
+    .tr {
+      padding: 32px 32px 26px;
+    }
+    .q__options {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (min-width: 1024px) {
+    .trainer__grid {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+      gap: clamp(48px, 6vw, 112px);
+      align-items: start;
+    }
+    .tr {
+      padding: 40px 40px 30px;
+    }
+  }
+</style>

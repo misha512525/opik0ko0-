@@ -1,0 +1,190 @@
+---
+import { FAQ } from '@/content/content';
+import { SHOW_TODO } from '@/lib/links';
+import { typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+---
+
+<section class="faq" id="faq" aria-labelledby="faq-title">
+  <div class="container faq__grid">
+    <h2 id="faq-title" class="h2" data-reveal><Rich text={FAQ.title} /></h2>
+
+    <ul class="faq__list" data-faq>
+      {
+        FAQ.items.map((item, i) => {
+          const answer = item.todo && !SHOW_TODO ? (item.fallback ?? '') : item.a;
+          return (
+            <li class="qa" data-qa>
+              <h3 class="qa__h">
+                <button
+                  class="qa__q"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls={`faq-a-${i}`}
+                  id={`faq-q-${i}`}
+                  data-qa-btn
+                >
+                  <span>{typo(item.q)}</span>
+                  <span class="qa__icon" aria-hidden="true" />
+                </button>
+              </h3>
+              <div class="qa__a" id={`faq-a-${i}`} role="region" aria-labelledby={`faq-q-${i}`} data-qa-panel>
+                <div class="qa__inner">
+                  <p class:list={[item.todo && SHOW_TODO && 'todo']} data-todo={item.todo}>
+                    {typo(answer)}
+                  </p>
+                  {item.todo && SHOW_TODO && item.fallback && (
+                    <p class="qa__fallback">В проде: {item.fallback}</p>
+                  )}
+                </div>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .faq {
+    padding-block: var(--section-y);
+    background: linear-gradient(180deg, var(--color-sky-50), var(--color-sky-100));
+  }
+  .faq__grid {
+    display: grid;
+    gap: 36px;
+  }
+  .faq__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line-strong);
+  }
+  .qa {
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .qa__h {
+    margin: 0;
+    font: inherit;
+    letter-spacing: normal;
+  }
+  .qa__q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+    min-height: 72px;
+    padding: 18px 0;
+    border: 0;
+    background: none;
+    text-align: left;
+    font-family: var(--font-serif);
+    font-size: clamp(1.35rem, 1.1rem + 1vw, 1.9rem);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    transition: color var(--dur-ui) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .qa__q:hover {
+      color: var(--color-blue-600);
+    }
+  }
+  .qa__q:active {
+    opacity: 0.7;
+  }
+  .qa__icon {
+    position: relative;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px var(--line);
+    transition:
+      background-color var(--dur-ui) var(--ease-out),
+      transform 0.4s var(--ease-expo);
+  }
+  .qa__icon::before,
+  .qa__icon::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 14px;
+    height: 1.75px;
+    margin: -0.875px 0 0 -7px;
+    border-radius: 2px;
+    background: var(--color-navy-900);
+    transition:
+      transform 0.4s var(--ease-expo),
+      background-color var(--dur-ui);
+  }
+  .qa__icon::after {
+    transform: rotate(90deg);
+  }
+  .qa__q[aria-expanded='true'] .qa__icon {
+    background: var(--color-navy-900);
+    transform: rotate(180deg);
+  }
+  .qa__q[aria-expanded='true'] .qa__icon::before,
+  .qa__q[aria-expanded='true'] .qa__icon::after {
+    background: #fff;
+  }
+  .qa__q[aria-expanded='true'] .qa__icon::after {
+    transform: rotate(0deg);
+  }
+  /* Плавная высота без замеров: grid-template-rows 0fr → 1fr */
+  .qa__a {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.45s var(--ease-expo);
+  }
+  .qa__a.is-open {
+    grid-template-rows: 1fr;
+  }
+  .qa__inner {
+    overflow: hidden;
+    min-height: 0;
+  }
+  .qa__inner p {
+    margin: 0;
+    padding: 0 56px 26px 0;
+    max-width: 60ch;
+    color: var(--color-ink-500);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+      opacity 0.3s var(--ease-out),
+      transform 0.45s var(--ease-expo);
+  }
+  .qa__a.is-open .qa__inner p {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0.08s;
+  }
+  .qa__inner .qa__fallback {
+    font-size: var(--fs-small);
+    font-style: italic;
+  }
+  :global(html:not(.js)) .qa__a {
+    grid-template-rows: 1fr;
+  }
+  :global(html:not(.js)) .qa__inner p {
+    opacity: 1;
+    transform: none;
+  }
+  @media (min-width: 1024px) {
+    .faq__grid {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+      gap: clamp(48px, 6vw, 112px);
+      align-items: start;
+    }
+    .faq__grid > h2 {
+      position: sticky;
+      top: calc(var(--nav-h) + 72px);
+    }
+  }
+</style>

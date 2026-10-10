@@ -1,0 +1,19 @@
+{
+  "name": "Анна Казацкая — русский язык и литература",
+  "short_name": "Казацкая",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#F5F9FF",
+  "background_color": "#F5F9FF",
+  "display": "standalone"
+}

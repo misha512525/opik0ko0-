@@ -1,0 +1,413 @@
+---
+import QRCode from 'qrcode';
+import { FINALE, LINKS, DEFAULT_MESSAGE } from '@/content/content';
+import { tg, link, type LinkKey } from '@/lib/links';
+import { typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+
+const qr = await QRCode.toString(LINKS.contact, {
+  type: 'svg',
+  margin: 0,
+  errorCorrectionLevel: 'M',
+  color: { dark: '#12264A', light: '#0000' },
+});
+const contacts = FINALE.contacts.map((c) => ({ ...c, url: link(c.href as LinkKey) })).filter((c) => c.url);
+const c = FINALE.composer;
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+const groups = [
+  { name: 'who', ...c.who },
+  { name: 'exam', ...c.exam },
+  { name: 'subject', ...c.subject },
+];
+---
+
+<section class="finale" id="contact" aria-labelledby="finale-title">
+  <div class="finale__glow" aria-hidden="true"><span></span><span></span></div>
+  <div class="container">
+    <h2 id="finale-title" class="finale__title" data-finale-title><Rich text={FINALE.title} /></h2>
+
+    <div class="finale__grid">
+      <form class="composer" data-composer data-base={tg('')} onsubmit="return false">
+        <p class="composer__lead">{typo(FINALE.lead)}</p>
+        {
+          groups.map((g) => (
+            <fieldset class="chips">
+              <legend class="chips__label">{g.label}</legend>
+              <div class="chips__row">
+                {g.options.map((o, i) => (
+                  <label class="chip">
+                    <input type="radio" name={g.name} value={o} checked={i === 0} />
+                    <span>{cap(o)}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ))
+        }
+        <label class="goal">
+          <span class="chips__label">{c.goal.label}</span>
+          <input
+            type="text"
+            name="goal"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="3"
+            placeholder={c.goal.placeholder}
+            autocomplete="off"
+          />
+        </label>
+
+        <div class="bubble-preview" aria-live="polite">
+          <span class="bubble-preview__to">Сообщение для Анны</span>
+          <p data-preview>{DEFAULT_MESSAGE}</p>
+        </div>
+
+        <div class="composer__send">
+          <Button href={tg()} icon="tg" magnetic goal="tg_composer" cursor="Написать" data-send="">
+            {c.send}
+          </Button>
+          <p class="composer__toast" data-toast role="status">{c.copied}</p>
+        </div>
+      </form>
+
+      <aside class="finale__side">
+        <div class="qr" aria-hidden="true">
+          <div class="qr__code" set:html={qr} />
+          <p class="qr__note">{FINALE.qrNote}</p>
+        </div>
+
+        <ul class="contacts">
+          {
+            contacts.map((ct) => (
+              <li>
+                <a
+                  class="contact"
+                  href={ct.href === 'contact' ? tg() : ct.url!}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <span class="contact__label">{typo(ct.label)}</span>
+                  <span class="contact__sub">{ct.sub}</span>
+                  <Icon name="arrow" size={18} class="contact__icon" />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="signature" aria-label={`Подпись: ${FINALE.signature}`} data-signature>
+          <span class="signature__text hand">{FINALE.signature}</span>
+          <svg class="signature__line" viewBox="0 0 240 24" aria-hidden="true">
+            <path class="pen" d="M4 16 C40 8 80 20 120 12 C160 4 200 18 236 8"></path>
+          </svg>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<style>
+  .finale {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    padding-block: var(--section-y) clamp(64px, 8vw, 112px);
+    background: var(--color-navy-900);
+    color: var(--color-sky-50);
+  }
+  .finale__glow span {
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: glow 16s var(--ease-in-out) infinite alternate;
+  }
+  .finale__glow span:first-child {
+    width: 90vmax;
+    height: 90vmax;
+    left: -40vmax;
+    top: -50vmax;
+    background: radial-gradient(closest-side, rgba(79, 142, 219, 0.38), transparent 70%);
+  }
+  .finale__glow span:last-child {
+    width: 70vmax;
+    height: 70vmax;
+    right: -30vmax;
+    bottom: -40vmax;
+    background: radial-gradient(closest-side, rgba(130, 178, 236, 0.25), transparent 70%);
+    animation-delay: -8s;
+  }
+  @keyframes glow {
+    to {
+      scale: 1.15;
+      translate: 4vw 3vh;
+    }
+  }
+  .finale__title {
+    margin: 0;
+    max-width: 14ch;
+    font-size: clamp(2.8rem, 1.4rem + 6vw, 8rem);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .finale__title :global(em) {
+    color: var(--color-blue-400);
+  }
+  .finale__grid {
+    display: grid;
+    gap: 40px;
+    margin-top: clamp(40px, 6vw, 80px);
+  }
+
+  /* ---------- Конструктор сообщения ---------- */
+  .composer {
+    display: grid;
+    gap: 18px;
+    padding: 24px 20px;
+    border-radius: var(--radius-xl);
+    background: var(--color-sky-50);
+    color: var(--color-navy-900);
+    box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.6);
+  }
+  .composer__lead {
+    margin: 0 0 4px;
+    font-size: var(--fs-lead);
+    line-height: 1.45;
+    color: var(--color-ink-500);
+  }
+  .chips {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .chips__label {
+    display: block;
+    margin-bottom: 8px;
+    padding: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-ink-500);
+  }
+  .chips__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    position: relative;
+    cursor: pointer;
+  }
+  .chip input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+  .chip span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    transition:
+      background-color var(--dur-ui) var(--ease-out),
+      color var(--dur-ui) var(--ease-out),
+      border-color var(--dur-ui) var(--ease-out),
+      transform var(--dur-press) var(--ease-out);
+  }
+  .chip:active span {
+    transform: scale(0.96);
+  }
+  .chip input:checked + span {
+    background: var(--color-navy-900);
+    border-color: var(--color-navy-900);
+    color: #fff;
+  }
+  .chip input:focus-visible + span {
+    outline: 2px solid var(--color-blue-500);
+    outline-offset: 3px;
+  }
+  .goal input {
+    width: 100%;
+    max-width: 200px;
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--color-navy-900);
+    transition: border-color var(--dur-ui);
+  }
+  .goal input:focus {
+    outline: none;
+    border-color: var(--color-blue-500);
+    box-shadow: 0 0 0 3px rgba(79, 142, 219, 0.2);
+  }
+  .bubble-preview {
+    position: relative;
+    margin-top: 6px;
+    padding: 14px 16px 16px;
+    border-radius: 20px 20px 20px 6px;
+    background: var(--color-sky-200);
+  }
+  .bubble-preview__to {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-blue-800);
+  }
+  .bubble-preview p {
+    margin: 0;
+    line-height: 1.5;
+  }
+  .composer__send {
+    display: grid;
+    gap: 10px;
+  }
+  .composer__send :global(.magnet),
+  .composer__send :global(.btn) {
+    width: 100%;
+  }
+  .composer__toast {
+    margin: 0;
+    min-height: 1.4em;
+    font-size: var(--fs-small);
+    color: var(--color-ink-500);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      opacity var(--dur-ui),
+      transform var(--dur-ui) var(--ease-out);
+  }
+  .composer__toast:global(.is-on) {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ---------- Справа: QR, контакты, подпись ---------- */
+  .finale__side {
+    display: grid;
+    gap: 28px;
+    align-content: start;
+  }
+  .qr {
+    display: none;
+  }
+  .contacts {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid rgba(174, 205, 244, 0.2);
+  }
+  .contact {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 16px;
+    align-items: center;
+    padding: 16px 0;
+    min-height: 64px;
+    border-bottom: 1px solid rgba(174, 205, 244, 0.2);
+    transition: color var(--dur-ui);
+  }
+  .contact__label {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    line-height: 1.1;
+    font-weight: 500;
+  }
+  .contact__sub {
+    grid-row: 2;
+    font-size: var(--fs-small);
+    color: rgba(232, 241, 253, 0.6);
+  }
+  .contact :global(.contact__icon) {
+    grid-row: span 2;
+    grid-column: 2;
+    transition: transform 0.4s var(--ease-expo);
+  }
+  .contact:hover {
+    color: var(--color-blue-300);
+  }
+  .contact:hover :global(.contact__icon) {
+    transform: translate(3px, -3px);
+  }
+  .contact:active {
+    opacity: 0.7;
+  }
+  .signature {
+    position: relative;
+    justify-self: start;
+    margin-top: 8px;
+    padding-right: 8px;
+  }
+  .signature__text {
+    display: block;
+    font-size: clamp(2.6rem, 2rem + 2vw, 3.6rem);
+    line-height: 1.1;
+    color: var(--color-sky-50);
+    padding: 0.1em 0.2em 0.15em 0;
+  }
+  .signature__line {
+    width: 100%;
+    height: 20px;
+    margin-top: -8px;
+    overflow: visible;
+  }
+  .signature__line path {
+    stroke: var(--color-blue-400);
+    stroke-width: 2.2;
+  }
+
+  @media (min-width: 640px) {
+    .composer {
+      padding: 36px;
+    }
+    .composer__send :global(.magnet),
+    .composer__send :global(.btn) {
+      width: auto;
+    }
+  }
+  @media (min-width: 1024px) {
+    .finale__grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: clamp(48px, 6vw, 112px);
+      align-items: start;
+    }
+    .qr {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .qr__code {
+      flex: none;
+      width: 132px;
+      height: 132px;
+      padding: 12px;
+      border-radius: 20px;
+      background: var(--color-sky-50);
+    }
+    .qr__code :global(svg) {
+      width: 100%;
+      height: 100%;
+    }
+    .qr__note {
+      margin: 0;
+      max-width: 16ch;
+      font-family: var(--font-hand);
+      font-size: 1.5rem;
+      line-height: 1.2;
+      color: var(--color-blue-300);
+    }
+  }
+</style>

@@ -1,0 +1,414 @@
+---
+import { ABOUT } from '@/content/content';
+import { typo } from '@/lib/typo';
+import Rich from '../ui/Rich.astro';
+
+// Стилизованная карта: координаты ≈ (долгота, широта) → viewBox, Тихорецк чуть разнесён для читаемости
+const points = [
+  { x: 300, y: 430, label: 'Краснодар', lx: -14, ly: 30, anchor: 'end' },
+  { x: 352, y: 376, label: 'Тихорецк', lx: 14, ly: 6, anchor: 'start' },
+  { x: 96, y: 70, label: 'Санкт-Петербург', lx: 16, ly: -14, anchor: 'start' },
+  { x: 268, y: 168, label: 'Москва', lx: 18, ly: 6, anchor: 'start' },
+];
+const route =
+  'M300 430 C318 410 334 392 352 376 C330 300 210 250 150 190 C110 150 80 110 96 70 C150 70 230 110 268 168';
+---
+
+<section class="about" id="about" aria-labelledby="about-title">
+  <div class="about__pin" data-about-pin>
+    <div class="container about__grid">
+      <div class="about__text">
+        <h2 id="about-title" class="h2" data-reveal><Rich text={ABOUT.title} /></h2>
+        <p class="about__intro" data-reveal>{typo(ABOUT.intro)}</p>
+
+        <!-- Десктоп: панели сменяют друг друга по скроллу -->
+        <ol class="stops" data-stops>
+          {
+            ABOUT.route.map((s, i) => (
+              <li class="stop" data-stop>
+                <span class="stop__index" aria-hidden="true">
+                  {i + 1}/{ABOUT.route.length}
+                </span>
+                <h3 class="stop__place">{s.place}</h3>
+                <p class="stop__text">{typo(s.text)}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+
+      <div class="about__map" aria-hidden="true">
+        <svg class="map" viewBox="0 0 440 500" data-map>
+          <defs>
+            <radialGradient id="mapGlow">
+              <stop offset="0" stop-color="#AECDF4" stop-opacity=".7"></stop>
+              <stop offset="1" stop-color="#AECDF4" stop-opacity="0"></stop>
+            </radialGradient>
+          </defs>
+          <path class="map__ghost" d={route}></path>
+          <path class="map__route" d={route} data-route></path>
+          {
+            points.map((p, i) => (
+              <g class="map__point" data-point={i}>
+                <circle class="map__halo" cx={p.x} cy={p.y} r="22" fill="url(#mapGlow)" />
+                <circle class="map__dot" cx={p.x} cy={p.y} r="6" />
+                <text class="map__label" x={p.x + p.lx} y={p.y + p.ly} text-anchor={p.anchor}>
+                  {p.label}
+                </text>
+              </g>
+            ))
+          }
+          <g class="map__now" data-point="4">
+            <circle class="map__pulse" cx="268" cy="168" r="18"></circle>
+            <circle class="map__pulse map__pulse--2" cx="268" cy="168" r="18"></circle>
+            <text class="map__label map__label--now" x="286" y="206">сейчас здесь</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="life" data-life>
+      <blockquote class="life__quote">
+        <p>«{typo(ABOUT.life.quote.replace(/\.$/, ''))}».</p>
+      </blockquote>
+      <div
+        class="life__bar"
+        role="img"
+        aria-label="Примерно 70% жизни — репетиторство, 30% — сон, семья и собака"
+      >
+        {
+          ABOUT.life.parts.map((p) => (
+            <span class="life__part" style={`--w:${p.value}`} data-life-part>
+              <span class="life__fill" data-life-fill />
+              <span class="life__value">{p.value}%</span>
+              <span class="life__label">{p.label}</span>
+            </span>
+          ))
+        }
+      </div>
+      <ul class="life__legend" aria-hidden="true">
+        {
+          ABOUT.life.parts.slice(1).map((p) => (
+            <li>
+              <b>{p.value}%</b> {p.label}
+            </li>
+          ))
+        }
+      </ul>
+      <p class="life__note hand">{ABOUT.life.note}</p>
+      <p class="life__motto hand" data-reveal>{ABOUT.motto}</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about {
+    position: relative;
+    padding-top: var(--section-y);
+    padding-bottom: var(--section-y);
+    background-color: var(--color-sky-50);
+  }
+  .about__grid {
+    display: grid;
+    gap: 32px;
+  }
+  .about__intro {
+    margin: 20px 0 0;
+    max-width: 34ch;
+    font-size: var(--fs-lead);
+    color: var(--color-ink-500);
+  }
+
+  /* ---------- Остановки ---------- */
+  .stops {
+    margin: 36px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .stop {
+    position: sticky;
+    top: calc(var(--nav-h) + 28px + var(--i, 0) * 10px);
+    display: grid;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 24px 22px 26px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(transparent 31px, rgba(79, 142, 219, 0.1) 32px) 0 10px / 100% 32px,
+      #fff;
+    box-shadow: var(--shadow-md);
+    transform-origin: 50% 0;
+  }
+  .stop:nth-child(1) {
+    --i: 0;
+  }
+  .stop:nth-child(2) {
+    --i: 1;
+  }
+  .stop:nth-child(3) {
+    --i: 2;
+  }
+  .stop:nth-child(4) {
+    --i: 3;
+  }
+  .stop:nth-child(5) {
+    --i: 4;
+    background: var(--color-blue-500);
+    color: #fff;
+    border-color: transparent;
+  }
+  .stop__index {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--color-blue-600);
+    font-variant-numeric: lining-nums;
+  }
+  .stop:nth-child(5) .stop__index {
+    color: var(--color-sky-200);
+  }
+  .stop__place {
+    margin: 0;
+    font-size: clamp(2.2rem, 1.6rem + 2.4vw, 3.6rem);
+    line-height: 1;
+  }
+  .stop__text {
+    margin: 0;
+    max-width: 36ch;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+
+  /* ---------- Карта ---------- */
+  .about__map {
+    display: none;
+  }
+  .map {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .map__ghost {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 8;
+    stroke-linecap: round;
+  }
+  .map__route {
+    fill: none;
+    stroke: var(--color-blue-500);
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+  .map__dot {
+    fill: #fff;
+    stroke: var(--color-blue-500);
+    stroke-width: 2.5;
+    transition:
+      fill 0.4s var(--ease-out),
+      r 0.4s var(--ease-out);
+  }
+  .map__halo {
+    opacity: 0;
+    transition: opacity 0.5s var(--ease-out);
+  }
+  .map__label {
+    font-family: var(--font-hand);
+    font-size: 22px;
+    fill: var(--color-ink-500);
+    transition: fill 0.4s;
+  }
+  .map__label--now {
+    fill: var(--color-pen-red);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .map__point.is-on .map__dot {
+    fill: var(--color-blue-500);
+  }
+  .map__point.is-on .map__halo {
+    opacity: 1;
+  }
+  .map__point.is-on .map__label {
+    fill: var(--color-navy-900);
+  }
+  .map__pulse {
+    fill: none;
+    stroke: var(--color-pen-red);
+    stroke-width: 2;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .map__now.is-on .map__pulse {
+    animation: pulse 2.2s var(--ease-out) infinite;
+  }
+  .map__now.is-on .map__pulse--2 {
+    animation-delay: 1.1s;
+  }
+  .map__now.is-on .map__label--now {
+    opacity: 1;
+  }
+  @keyframes pulse {
+    from {
+      opacity: 0.9;
+      transform: scale(0.4);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.6);
+    }
+  }
+
+  /* ---------- 70 / 30 ---------- */
+  .life {
+    margin-top: clamp(72px, 10vw, 140px);
+    max-width: 920px;
+  }
+  .life__quote {
+    margin: 0;
+  }
+  .life__quote p {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.6rem, 1.1rem + 2vw, 2.8rem);
+    line-height: 1.15;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .life__bar {
+    display: flex;
+    gap: 4px;
+    margin-top: 32px;
+  }
+  .life__part {
+    flex: var(--w) 1 0;
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    min-width: 0;
+    padding-top: 0;
+  }
+  .life__fill {
+    height: 6px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    background: var(--color-sky-200);
+    transform-origin: 0 50%;
+  }
+  .life__part:first-child .life__fill {
+    background: var(--color-blue-500);
+  }
+  .life__value {
+    font-family: var(--font-serif);
+    font-size: clamp(1.4rem, 1rem + 1.6vw, 2.4rem);
+    line-height: 1;
+    font-weight: 500;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  .life__part:not(:first-child) .life__value {
+    font-size: 1.1rem;
+    color: var(--color-ink-500);
+  }
+  .life__label {
+    font-size: 0.8125rem;
+    line-height: 1.25;
+    color: var(--color-ink-500);
+    overflow-wrap: anywhere;
+  }
+  /* На телефоне подписи маленьких долей — отдельной легендой, чтобы не рвать слова */
+  .life__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+    color: var(--color-ink-500);
+  }
+  .life__legend b {
+    font-weight: 600;
+    color: var(--color-navy-900);
+  }
+  @media (max-width: 639px) {
+    .life__part:not(:first-child) .life__value,
+    .life__part:not(:first-child) .life__label {
+      display: none;
+    }
+  }
+  @media (min-width: 640px) {
+    .life__legend {
+      display: none;
+    }
+  }
+  .life__note {
+    margin: 14px 0 0;
+    font-size: 1.15rem;
+    color: var(--color-ink-500);
+    text-align: right;
+  }
+  .life__motto {
+    margin: 40px 0 0;
+    font-size: clamp(2rem, 1.4rem + 2.4vw, 3.4rem);
+    line-height: 1.1;
+    color: var(--color-blue-600);
+    rotate: -2deg;
+  }
+
+  @media (min-width: 1024px) {
+    .about {
+      padding-top: 0;
+    }
+    .about__pin {
+      height: 100svh;
+      display: flex;
+      align-items: center;
+      padding-top: var(--nav-h);
+    }
+    .about__grid {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      gap: clamp(48px, 6vw, 112px);
+      align-items: center;
+      width: 100%;
+    }
+    .about__map {
+      display: block;
+      max-width: 520px;
+      justify-self: end;
+      width: 100%;
+    }
+    /* На десктопе остановки — стопка панелей, которые сменяются по скроллу */
+    .stops {
+      position: relative;
+      display: grid;
+      min-height: 230px;
+    }
+    .stop {
+      grid-area: 1 / 1;
+      position: relative;
+      top: auto;
+      margin: 0;
+      align-self: start;
+    }
+    :global(.motion-ok) .stop:not(:first-child) {
+      opacity: 0;
+      visibility: hidden;
+    }
+    :global(html:not(.motion-ok)) .stops {
+      display: block;
+    }
+    :global(html:not(.motion-ok)) .stop {
+      margin-bottom: 16px;
+    }
+    :global(html:not(.motion-ok)) .about__pin {
+      height: auto;
+      padding-block: var(--section-y) 0;
+    }
+  }
+</style>

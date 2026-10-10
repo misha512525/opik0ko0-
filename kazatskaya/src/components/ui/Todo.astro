@@ -1,0 +1,26 @@
+---
+/**
+ * Обёртка для неподтверждённого контента.
+ * PUBLIC_SHOW_TODO=1 → красная пунктирная обводка с подписью «TODO: …»;
+ * иначе — просто содержимое, а с hideInProd — ничего.
+ */
+import type { HTMLTag } from 'astro/types';
+import { SHOW_TODO } from '@/lib/links';
+interface Props {
+  note: string;
+  hideInProd?: boolean;
+  as?: HTMLTag;
+  class?: string;
+}
+const { note, hideInProd = false, as: Tag = 'div', class: cls } = Astro.props;
+---
+
+{
+  SHOW_TODO ? (
+    <Tag class:list={['todo', cls]} data-todo={note}>
+      <slot />
+    </Tag>
+  ) : hideInProd ? null : (
+    <slot />
+  )
+}
