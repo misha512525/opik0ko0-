@@ -1,0 +1,65 @@
+---
+/**
+ * Слот под фото. Положите файл src/assets/photos/<name>.jpg (или .png/.webp) — он появится на сайте
+ * (AVIF/WebP, ленивая загрузка). Нет файла — блок не выводится; с PUBLIC_SHOW_TODO=1 виден пунктир-заглушка.
+ * Промты для генерации — в PHOTOS.md.
+ */
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import { SHOW_TODO } from '@/lib/links';
+import { typo } from '@/lib/typo';
+
+const files = import.meta.glob<{ default: ImageMetadata }>('/src/assets/photos/*.{jpg,jpeg,png,webp}', {
+  eager: true,
+});
+
+interface Props {
+  name: string;
+  alt: string;
+  sizes: string;
+  caption?: string;
+  class?: string;
+  /** Позиция кадрирования, напр. «50% 30%» */
+  focus?: string;
+}
+const { name, alt, sizes, caption, class: cls, focus = '50% 50%' } = Astro.props;
+const entry = Object.entries(files).find(
+  ([p]) =>
+    p
+      .split('/')
+      .pop()!
+      .replace(/\.\w+$/, '') === name,
+);
+const img = entry?.[1].default;
+const widths = img ? [480, 800, 1200, 1600].filter((w) => w <= img.width) : [];
+if (img && !widths.length) widths.push(img.width);
+---
+
+{
+  img ? (
+    <figure class:list={['photo', cls]} data-reveal>
+      <div class="photo__frame">
+        <Picture
+          src={img}
+          alt={alt}
+          widths={widths}
+          sizes={sizes}
+          formats={['avif', 'webp']}
+          loading="lazy"
+          decoding="async"
+          style={`object-position:${focus}`}
+        />
+      </div>
+      {caption && <figcaption>{typo(caption)}</figcaption>}
+    </figure>
+  ) : SHOW_TODO ? (
+    <div
+      class:list={['photo', 'photo--empty', 'todo', cls]}
+      data-todo={`фото ${name}.jpg — промт в PHOTOS.md`}
+    >
+      <div class="photo__frame">
+        <span>{name}.jpg</span>
+      </div>
+    </div>
+  ) : null
+}

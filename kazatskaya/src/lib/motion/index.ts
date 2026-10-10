@@ -4,6 +4,4 @@ export * from './draw';
 export * from './split';
 export * from './counter';
 export * from './reveal';
-export * from './parallax';
-export * from './magnetic';
 export * from './scroll';

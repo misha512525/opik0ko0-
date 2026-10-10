@@ -24,7 +24,7 @@ const hasItems = items.length > 0;
         <ul class="reel__track" data-reel-track>
           {items.map((r) =>
             r.kind === 'screenshot' ? (
-              <li class="rv rv--shot" data-card="flat">
+              <li class="rv rv--shot">
                 <div class="rv__phone">
                   <img src={r.src} alt={r.alt} loading="lazy" decoding="async" />
                 </div>
@@ -33,7 +33,6 @@ const hasItems = items.length > 0;
               <li
                 class:list={['rv', isPlaceholder(r.text) && 'todo']}
                 data-todo={isPlaceholder(r.text) ? 'реальный отзыв' : undefined}
-                data-card="flat"
               >
                 <svg class="rv__quote" viewBox="0 0 40 32" aria-hidden="true">
                   <path d="M0 32V19C0 8 6 1 17 0l1 5C11 7 8 11 8 17h8v15H0Zm22 0V19C22 8 28 1 39 0l1 5c-7 2-10 6-10 12h8v15H22Z" />
@@ -55,31 +54,15 @@ const hasItems = items.length > 0;
   }
 
   <div class="container">
-    <a
-      class="channel"
-      href={LINKS.results}
-      target="_blank"
-      rel="noopener"
-      data-goal="reviews_channel"
-      data-card="flat"
-      data-cursor="Открыть"
-    >
+    <a class="channel" href={LINKS.results} target="_blank" rel="noopener" data-goal="reviews_channel">
       <div class="channel__text">
         <span class="channel__title">{REVIEWS.channelCta}</span>
         <span class="channel__sub">t.me/egerusskiy100Kazatskaya</span>
       </div>
-      <!-- Абстрактная лента сообщений: без выдуманного текста -->
-      <div class="channel__bubbles" aria-hidden="true">
-        <span class="bubble" style="--w:78%"></span>
-        <span class="bubble bubble--me" style="--w:46%"></span>
-        <span class="bubble" style="--w:64%"><b class="bubble__score">100</b></span>
-        <span class="bubble" style="--w:88%"></span>
-        <span class="bubble bubble--me" style="--w:38%"></span>
-      </div>
       <span class="channel__btn">
-        <span class="btn btn--light">
+        <span class="btn btn--primary">
           <span class="btn__label">Открыть канал</span>
-          <span class="btn__icon"><Icon name="arrow" size={16} /><Icon name="arrow" size={16} /></span>
+          <span class="btn__icon"><Icon name="arrow" size={16} /></span>
         </span>
       </span>
     </a>
@@ -180,29 +163,25 @@ const hasItems = items.length > 0;
   .channel {
     position: relative;
     display: grid;
-    gap: 28px;
+    gap: 24px;
     margin-top: clamp(32px, 5vw, 56px);
     padding: 28px 24px;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    background: linear-gradient(135deg, var(--color-blue-500), var(--color-blue-800));
-    color: #fff;
-    box-shadow: var(--shadow-lg);
-    transition: transform var(--dur-press) var(--ease-out);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line-strong);
+    background-color: #fff;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    transition:
+      border-color var(--dur-ui) var(--ease-out),
+      transform var(--dur-press) var(--ease-out);
+  }
+  .channel:hover {
+    border-color: var(--color-blue-500);
   }
   .channel:active {
-    transform: scale(0.985);
-  }
-  .channel::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      420px circle at var(--mx, 80%) var(--my, 20%),
-      rgba(255, 255, 255, 0.22),
-      transparent 60%
-    );
+    transform: scale(0.99);
   }
   .channel__text {
     display: grid;
@@ -210,53 +189,19 @@ const hasItems = items.length > 0;
   }
   .channel__title {
     font-family: var(--font-serif);
-    font-size: clamp(2.4rem, 1.6rem + 3.4vw, 5rem);
-    line-height: 0.98;
+    font-size: clamp(2.2rem, 1.6rem + 2.6vw, 4rem);
+    line-height: 1;
     font-weight: 500;
     letter-spacing: -0.025em;
     text-wrap: balance;
   }
   .channel__sub {
     font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--color-ink-500);
     overflow-wrap: anywhere;
-  }
-  .channel__bubbles {
-    display: grid;
-    gap: 10px;
-  }
-  .bubble {
-    position: relative;
-    display: block;
-    width: var(--w);
-    height: 38px;
-    border-radius: 18px 18px 18px 6px;
-    background: rgba(255, 255, 255, 0.16);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-  }
-  .bubble--me {
-    justify-self: end;
-    border-radius: 18px 18px 6px 18px;
-    background: rgba(255, 255, 255, 0.3);
-  }
-  .bubble__score {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    translate: 0 -50%;
-    font-family: var(--font-hand);
-    font-weight: 400;
-    font-size: 1.15rem;
-    color: #ffd2cf;
   }
   .channel__btn {
     pointer-events: none;
-  }
-  .channel:hover .btn__icon :global(svg:first-child) {
-    transform: translate(150%, -150%);
-  }
-  .channel:hover .btn__icon :global(svg + svg) {
-    transform: none;
   }
 
   @media (min-width: 1024px) {
@@ -268,17 +213,9 @@ const hasItems = items.length > 0;
       flex-basis: 420px;
     }
     .channel {
-      grid-template-columns: 1.1fr 0.9fr;
-      grid-template-rows: auto auto;
-      align-items: center;
-      padding: 56px;
-      column-gap: 64px;
-    }
-    .channel__bubbles {
-      grid-row: span 2;
-    }
-    .channel__btn {
-      align-self: end;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      padding: 48px;
     }
   }
 </style>

@@ -1,23 +1,20 @@
-import { gsap, ScrollTrigger } from './gsap';
+import { gsap } from './gsap';
+import { onceVisible } from './reveal';
 
 /** Счётчик: от 0 до значения, один раз при входе во вьюпорт. Ширина фиксирована (tabular-nums + min-width в ch). */
-export function counter(el: HTMLElement, opts: { duration?: number; start?: string } = {}) {
+export function counter(el: HTMLElement, opts: { duration?: number } = {}) {
   const to = Number(el.dataset.count ?? el.textContent ?? 0);
   el.style.minWidth = `${String(to).length}ch`;
   const state = { v: 0 };
   el.textContent = '0';
-  return ScrollTrigger.create({
-    trigger: el,
-    start: opts.start ?? 'top 85%',
-    once: true,
-    onEnter: () =>
-      gsap.to(state, {
-        v: to,
-        duration: opts.duration ?? Math.min(2.2, 0.9 + to / 80),
-        ease: 'expo.out',
-        onUpdate: () => {
-          el.textContent = String(Math.round(state.v));
-        },
-      }),
-  });
+  onceVisible(el, () =>
+    gsap.to(state, {
+      v: to,
+      duration: opts.duration ?? Math.min(1.8, 0.8 + to / 100),
+      ease: 'expo.out',
+      onUpdate: () => {
+        el.textContent = String(Math.round(state.v));
+      },
+    }),
+  );
 }

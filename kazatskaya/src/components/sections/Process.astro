@@ -3,6 +3,7 @@ import { PROCESS } from '@/content/content';
 import { typo } from '@/lib/typo';
 import Rich from '../ui/Rich.astro';
 import Todo from '../ui/Todo.astro';
+import Photo from '../ui/Photo.astro';
 ---
 
 <section class="process" id="process" aria-labelledby="process-title">
@@ -10,6 +11,12 @@ import Todo from '../ui/Todo.astro';
     <div class="process__head">
       <h2 id="process-title" class="h2" data-reveal><Rich text={PROCESS.title} /></h2>
       <p class="lead process__lead" data-reveal>{typo(PROCESS.lead)}</p>
+      <Photo
+        name="lesson"
+        class="process__photo"
+        alt="Ноутбук, наушники и тетрадь с конспектом на столе — подготовка к занятию"
+        sizes="(min-width: 1024px) 34vw, 100vw"
+      />
     </div>
 
     <Todo note="уточнить процесс у Анны">
@@ -48,6 +55,10 @@ import Todo from '../ui/Todo.astro';
   }
   .process__lead {
     margin: 20px 0 0;
+  }
+  .process__head :global(.process__photo) {
+    --ratio: 3 / 2;
+    margin-top: 32px;
   }
   .steps {
     position: relative;

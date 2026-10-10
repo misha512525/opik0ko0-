@@ -1,4 +1,4 @@
-import { gsap, MQ, EASE, splitLines, drawPath, prepareDraw } from '@/lib/motion';
+import { gsap, splitLines, drawPath, prepareDraw, prefersReduced, onceVisible } from '@/lib/motion';
 
 const SUBJECT_DAT: Record<string, string> = { 'русский язык': 'русскому языку', литература: 'литературе' };
 const balls = (n: number) => {
@@ -63,39 +63,24 @@ export function initFinale() {
     update();
   }
 
-  const mm = gsap.matchMedia();
-  mm.add(`${MQ.desktop}, ${MQ.mobile}`, () => {
-    const title = document.querySelector<HTMLElement>('[data-finale-title]');
-    if (title) {
-      const { anim } = splitLines(title, { paused: true });
-      gsap.timeline({ scrollTrigger: { trigger: title, start: 'top 80%', once: true } }).add(() => {
-        anim()?.play();
-      });
-    }
-    const sig = document.querySelector<HTMLElement>('[data-signature]');
-    if (sig) {
-      const text = sig.querySelector('.signature__text');
-      const line = sig.querySelector<SVGElement>('.signature__line');
-      if (line) prepareDraw(line.querySelectorAll('path'));
+  if (prefersReduced()) return;
+  const title = document.querySelector<HTMLElement>('[data-finale-title]');
+  if (title) {
+    const { anim } = splitLines(title, { paused: true });
+    onceVisible(title, () => anim()?.play());
+  }
+  // «Перо пишет»: подпись проявляется слева направо, затем росчерк
+  const sig = document.querySelector<HTMLElement>('[data-signature]');
+  if (sig) {
+    const text = sig.querySelector('.signature__text');
+    const line = sig.querySelector<SVGElement>('.signature__line');
+    if (line) prepareDraw(line.querySelectorAll('path'));
+    gsap.set(text, { clipPath: 'inset(-20% 100% -20% 0)' });
+    onceVisible(sig, () =>
       gsap
-        .timeline({ scrollTrigger: { trigger: sig, start: 'top 90%', once: true } })
-        // «Перо пишет»: подпись проявляется слева направо, затем росчерк
-        .fromTo(
-          text,
-          { clipPath: 'inset(-20% 100% -20% 0)' },
-          { clipPath: 'inset(-20% 0% -20% 0)', duration: 1.4, ease: 'power2.inOut' },
-        )
-        .add(drawPath(line, { duration: 0.7 }), 1.1);
-    }
-    const composer = document.querySelector('[data-composer]');
-    if (composer) {
-      gsap.from(composer, {
-        y: 56,
-        opacity: 0,
-        duration: 1,
-        ease: EASE.out,
-        scrollTrigger: { trigger: composer, start: 'top 85%', once: true },
-      });
-    }
-  });
+        .timeline()
+        .to(text, { clipPath: 'inset(-20% 0% -20% 0)', duration: 1.4, ease: 'power2.inOut' })
+        .add(drawPath(line, { duration: 0.7 }), 1.1),
+    );
+  }
 }

@@ -157,13 +157,6 @@
     text-rendering: optimizeLegibility;
     hanging-punctuation: first;
   }
-  html.lenis,
-  html.lenis body {
-    height: auto;
-  }
-  .lenis.lenis-stopped {
-    overflow: clip;
-  }
   body {
     min-height: 100svh;
     font-size: var(--fs-body);
@@ -362,30 +355,14 @@
   .btn__icon svg {
     width: 16px;
     height: 16px;
-    transition: transform 0.42s var(--ease-expo);
+    transition: transform 0.3s var(--ease-out);
   }
-  .btn__icon svg + svg {
-    position: absolute;
-    transform: translate(-150%, 150%);
-  }
-  .btn.is-launch .btn__icon svg:first-child,
-  .btn:hover .btn__icon svg:first-child {
-    transform: translate(150%, -150%);
-  }
-  .btn.is-launch .btn__icon svg + svg,
-  .btn:hover .btn__icon svg + svg {
-    transform: none;
-  }
-  @media (hover: none) {
-    .btn:hover .btn__icon svg:first-child {
-      transform: none;
-    }
-    .btn:hover .btn__icon svg + svg {
-      transform: translate(-150%, 150%);
+  @media (hover: hover) and (pointer: fine) {
+    .btn:hover .btn__icon svg {
+      transform: translate(2px, -2px);
     }
   }
 
-  /* Белый текст на blue-500 даёт 3.4:1 — для AA кнопка на blue-600 (4.7:1) */
   .btn--primary {
     background: var(--color-blue-600);
     color: #fff;
@@ -410,22 +387,6 @@
     .btn--dark:hover {
       background: var(--color-blue-800);
     }
-  }
-  /* Блик: по hover на десктопе, раз в ~6 c на тач-устройствах (класс ставит JS) */
-  .btn--primary::after {
-    content: '';
-    position: absolute;
-    inset: -20% auto -20% 0;
-    width: 40%;
-    z-index: 1;
-    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
-    transform: translateX(-160%) skewX(-18deg);
-    pointer-events: none;
-  }
-  .btn--primary.is-shine::after,
-  .btn--primary:hover::after {
-    transition: transform 0.9s var(--ease-in-out);
-    transform: translateX(360%) skewX(-18deg);
   }
   .btn--ghost {
     background: rgba(255, 255, 255, 0.55);
@@ -541,6 +502,50 @@
     stroke: var(--color-pen-green);
   }
 
+  /* Фото-слоты (src/components/ui/Photo.astro) */
+  .photo {
+    margin: 0;
+    --ratio: 4 / 5;
+  }
+  .photo__frame {
+    position: relative;
+    aspect-ratio: var(--ratio);
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-sand-100);
+  }
+  .photo__frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .photo figcaption {
+    margin-top: 12px;
+    padding-left: 14px;
+    border-left: 1.5px solid rgba(217, 71, 63, 0.45);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    color: var(--color-ink-500);
+  }
+  .photo--empty .photo__frame {
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--line-strong);
+    font-family: var(--font-serif);
+    font-style: italic;
+    color: var(--color-ink-500);
+  }
+  .photo--band {
+    --ratio: 4 / 5;
+  }
+  @media (min-width: 768px) {
+    .photo--band {
+      --ratio: 21 / 9;
+    }
+  }
+
   /* TODO-плейсхолдеры (видны только с PUBLIC_SHOW_TODO=1) */
   .todo {
     outline: 2px dashed #e5484d !important;
@@ -562,8 +567,14 @@
   }
 
   /* Появление при скролле (класс ставится только когда JS + motion разрешены) */
-  .motion-ok [data-reveal]:not([data-revealed]) {
+  .motion-ok [data-reveal] {
+    transition:
+      opacity 0.7s var(--ease-out),
+      transform 0.9s var(--ease-expo);
+  }
+  .motion-ok [data-reveal]:not(.is-in) {
     opacity: 0;
+    transform: translate3d(0, 24px, 0);
   }
 }
 

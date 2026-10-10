@@ -19,8 +19,8 @@ const balls = (n: number) => plural(n, ['балл', 'балла', 'баллов'
 
     <div class="results__grid">
       <div class="results__media">
-        <div class="phone" data-phone>
-          <div class="phone__screen" data-video data-cursor={SHOW_STUDENT_PHOTOS ? 'Смотреть' : undefined}>
+        <div class="phone" data-phone data-reveal>
+          <div class="phone__screen" data-video>
             {
               SHOW_STUDENT_PHOTOS ? (
                 <>
@@ -83,16 +83,11 @@ const balls = (n: number) => plural(n, ['балл', 'балла', 'баллов'
         </h2>
         <p class="results__lead" data-reveal>{typo(RESULTS_SECTION.lead)}</p>
 
-        <div class="cards" data-results-track>
+        <div class="cards" data-results-track data-reveal>
           <ol class="cards__list" data-results-list>
             {
               RESULTS.map((r, i) => (
-                <li
-                  class:list={['rcard', r.score === 100 && 'rcard--hundred']}
-                  data-rcard
-                  data-card
-                  style={`--i:${i}`}
-                >
+                <li class:list={['rcard', r.score === 100 && 'rcard--hundred']} data-rcard style={`--i:${i}`}>
                   <span class="rcard__name hand">{r.name}</span>
                   <span class="rcard__score">
                     <span class="rcard__num">{r.score}</span>
@@ -133,14 +128,14 @@ const balls = (n: number) => plural(n, ['балл', 'балла', 'баллов'
 
     <div class="record" data-record>
       <div class="record__year" aria-hidden="true">{RECORD.year}</div>
-      <div class="record__body">
+      <div class="record__body" data-reveal>
         <ul class="record__hundreds" aria-hidden="true">
           {Array.from({ length: RECORD.hundreds }, () => <li data-hundred>100</li>)}
         </ul>
         <h3 class="record__title"><Rich text={RESULTS_SECTION.record.title} /></h3>
         <p class="record__text">{typo(RESULTS_SECTION.record.text)}</p>
         <div class="record__cta">
-          <Button href={LINKS.results} variant="light" goal="results_channel" cursor="Проверить">
+          <Button href={LINKS.results} variant="light" goal="results_channel">
             {RESULTS_SECTION.cta}
           </Button>
         </div>
@@ -178,7 +173,7 @@ const balls = (n: number) => plural(n, ['балл', 'балла', 'баллов'
     height: 60vmax;
     right: -24vmax;
     bottom: -10%;
-    background: radial-gradient(closest-side, rgba(130, 178, 236, 0.22), rgba(130, 178, 236, 0) 72%);
+    background: none;
   }
 
   .manifesto {
@@ -378,9 +373,6 @@ const balls = (n: number) => plural(n, ['балл', 'балла', 'баллов'
       opacity: 1;
     }
   }
-  .rcard:global(.is-center)::after {
-    opacity: 1;
-  }
   .rcard:active {
     transform: scale(0.98);
   }
@@ -434,15 +426,6 @@ const balls = (n: number) => plural(n, ['балл', 'балла', 'баллов'
     padding-left: 10px;
     font-size: 0.8125rem;
     color: var(--color-ink-500);
-  }
-  .rcard :global(.ripple) {
-    position: absolute;
-    width: 320px;
-    height: 320px;
-    margin: -160px 0 0 -160px;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(79, 142, 219, 0.35), transparent);
-    pointer-events: none;
   }
   .cards__progress {
     height: 2px;

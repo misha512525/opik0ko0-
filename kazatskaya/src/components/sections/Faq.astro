@@ -3,11 +3,20 @@ import { FAQ } from '@/content/content';
 import { SHOW_TODO } from '@/lib/links';
 import { typo } from '@/lib/typo';
 import Rich from '../ui/Rich.astro';
+import Photo from '../ui/Photo.astro';
 ---
 
 <section class="faq" id="faq" aria-labelledby="faq-title">
   <div class="container faq__grid">
-    <h2 id="faq-title" class="h2" data-reveal><Rich text={FAQ.title} /></h2>
+    <div class="faq__head">
+      <h2 id="faq-title" class="h2" data-reveal><Rich text={FAQ.title} /></h2>
+      <Photo
+        name="calm"
+        class="faq__photo"
+        alt="Чашка чая, раскрытая тетрадь и карандаш у окна"
+        sizes="(min-width: 1024px) 30vw, 100vw"
+      />
+    </div>
 
     <ul class="faq__list" data-faq>
       {
@@ -54,6 +63,10 @@ import Rich from '../ui/Rich.astro';
   .faq__grid {
     display: grid;
     gap: 36px;
+  }
+  .faq__head :global(.faq__photo) {
+    --ratio: 4 / 3;
+    margin-top: 28px;
   }
   .faq__list {
     margin: 0;
@@ -182,7 +195,7 @@ import Rich from '../ui/Rich.astro';
       gap: clamp(48px, 6vw, 112px);
       align-items: start;
     }
-    .faq__grid > h2 {
+    .faq__head {
       position: sticky;
       top: calc(var(--nav-h) + 72px);
     }

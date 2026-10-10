@@ -1,4 +1,4 @@
-import { gsap, ScrollTrigger, getLenis, prefersReduced, EASE, DUR, STAGGER } from '@/lib/motion';
+import { gsap, ScrollTrigger, prefersReduced, EASE, DUR, STAGGER } from '@/lib/motion';
 
 /** Пилюля-навигация: тень после скролла, прогресс страницы, индикатор активной секции. */
 export function initNav() {
@@ -10,12 +10,6 @@ export function initNav() {
     end: 'max',
     onToggle: (self) => nav.classList.toggle('is-scrolled', self.isActive),
   });
-
-  const bar = document.querySelector<HTMLElement>('[data-progress]');
-  if (bar) {
-    const setX = gsap.quickSetter(bar, 'scaleX');
-    ScrollTrigger.create({ start: 0, end: 'max', onUpdate: (s) => setX(s.progress) });
-  }
 
   const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]'));
   const indicator = document.querySelector<HTMLElement>('[data-nav-indicator]');
@@ -73,7 +67,6 @@ export function initMenu() {
     tl?.kill();
     if (open) {
       menu.hidden = false;
-      getLenis()?.stop();
       document.documentElement.style.overflow = 'hidden';
       main?.setAttribute('inert', '');
       footer?.setAttribute('inert', '');
@@ -103,7 +96,6 @@ export function initMenu() {
         { opacity: 0, duration: 0.3 },
         0.1,
       );
-      getLenis()?.start();
       document.documentElement.style.overflow = '';
       main?.removeAttribute('inert');
       footer?.removeAttribute('inert');

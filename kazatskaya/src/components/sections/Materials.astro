@@ -5,6 +5,7 @@ import { typo } from '@/lib/typo';
 import Rich from '../ui/Rich.astro';
 import Button from '../ui/Button.astro';
 import Todo from '../ui/Todo.astro';
+import Photo from '../ui/Photo.astro';
 
 const max = link('max');
 const bot = link('bot');
@@ -55,6 +56,12 @@ const bot = link('bot');
 
       <!-- Бесплатное -->
       <article class="free" data-free>
+        <Photo
+          name="papers"
+          class="free__photo"
+          alt="Распечатанные варианты с заданиями, скрепки и карандаш на деревянном столе"
+          sizes="(min-width: 1024px) 34vw, 100vw"
+        />
         <h3 class="free__title">{MATERIALS.free.title}</h3>
         <ul class="free__list">
           {
@@ -267,6 +274,9 @@ const bot = link('bot');
     background-image: linear-gradient(transparent 35px, rgba(79, 142, 219, 0.1) 36px);
     background-size: 100% 36px;
     box-shadow: var(--shadow-sm);
+  }
+  .free :global(.free__photo) {
+    --ratio: 3 / 2;
   }
   .free__title {
     margin: 0;

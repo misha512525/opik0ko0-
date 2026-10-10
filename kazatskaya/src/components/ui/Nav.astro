@@ -5,8 +5,6 @@ import Button from './Button.astro';
 import Mono from './Mono.astro';
 ---
 
-<div class="progress" aria-hidden="true"><span data-progress></span></div>
-
 <header class="nav" data-nav>
   <div class="nav__pill glass">
     <a class="nav__logo" href="#top">
@@ -32,7 +30,7 @@ import Mono from './Mono.astro';
     </nav>
 
     <div class="nav__cta">
-      <Button href={tg()} size="sm" icon="tg" goal="tg_nav" cursor="Написать">
+      <Button href={tg()} size="sm" icon="tg" goal="tg_nav">
         <span class="nav__cta-long">Написать в Telegram</span><span class="nav__cta-short">Написать</span>
       </Button>
     </div>
@@ -79,21 +77,6 @@ import Mono from './Mono.astro';
 </div>
 
 <style>
-  .progress {
-    position: fixed;
-    inset: 0 0 auto 0;
-    height: 2px;
-    z-index: 120;
-    pointer-events: none;
-  }
-  .progress span {
-    display: block;
-    height: 100%;
-    background: linear-gradient(90deg, var(--color-blue-400), var(--color-blue-600));
-    transform-origin: 0 50%;
-    transform: scaleX(0);
-  }
-
   .nav {
     position: fixed;
     top: max(10px, env(safe-area-inset-top));

@@ -67,17 +67,4 @@ export function initServices() {
       }
     });
   });
-
-  // Первое появление карточек
-  if (!prefersReduced()) {
-    gsap.from(panels[0].querySelectorAll('[data-svc]'), {
-      opacity: 0,
-      y: 48,
-      duration: 0.9,
-      ease: EASE.out,
-      stagger: STAGGER.loose,
-      clearProps: 'transform',
-      scrollTrigger: { trigger: panels[0], start: 'top 82%', once: true },
-    });
-  }
 }

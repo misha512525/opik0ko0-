@@ -1,57 +1,36 @@
-import { gsap, ScrollTrigger } from './gsap';
-import { DUR, EASE, STAGGER, distance } from './tokens';
-
 /**
- * Пакетное появление [data-reveal] при входе во вьюпорт.
- * data-reveal="scale" — вместо сдвига лёгкий scale 0.96 → 1.
+ * Появление [data-reveal] при входе во вьюпорт.
+ * IntersectionObserver + CSS-переход (не скролл-триггеры): работает сразу с загрузки,
+ * не оставляет пустых мест при быстром скролле, не зависит от пересчёта позиций.
+ * Соседние элементы, вошедшие одновременно, получают задержку по очереди (стаггер 70 мс).
  */
 export function initReveals(root: ParentNode = document) {
-  const items = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]:not([data-reveal-manual])'));
+  const items = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-in)'));
   if (!items.length) return;
-  ScrollTrigger.batch(items, {
-    start: 'top 88%',
-    once: true,
-    onEnter: (batch) => {
-      // помечаем сразу: после clearProps CSS-правило скрытия больше не применяется
-      batch.forEach((el) => el.setAttribute('data-revealed', ''));
-      gsap.fromTo(
-        batch,
-        { opacity: 0, y: (_i: number, el: HTMLElement) => (el.dataset.reveal === 'scale' ? 0 : distance()) },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: DUR.reveal,
-          ease: EASE.out,
-          stagger: STAGGER.loose,
-          overwrite: true,
-          clearProps: 'transform,opacity,willChange',
-        },
-      );
+  const io = new IntersectionObserver(
+    (entries) => {
+      const entering = entries.filter((e) => e.isIntersecting).map((e) => e.target as HTMLElement);
+      entering.forEach((el, i) => {
+        el.style.transitionDelay = `${Math.min(i, 4) * 70}ms`;
+        el.classList.add('is-in');
+        io.unobserve(el);
+      });
     },
-  });
-  gsap.set(
-    items.filter((el) => el.dataset.reveal === 'scale'),
-    { scale: 0.96 },
+    { rootMargin: '0px 0px -8% 0px', threshold: 0.01 },
   );
+  items.forEach((el) => io.observe(el));
 }
 
-/** Ручной reveal группы элементов (стаггер), например карточек секции. */
-export function reveal(targets: HTMLElement[], trigger: Element, vars: gsap.TweenVars = {}) {
-  return gsap.fromTo(
-    targets,
-    { opacity: 0, y: distance() },
-    {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      duration: DUR.reveal,
-      ease: EASE.out,
-      stagger: STAGGER.base,
-      clearProps: 'transform,opacity',
-      scrollTrigger: { trigger, start: 'top 82%', once: true },
-      onStart: () => targets.forEach((el) => el.setAttribute('data-revealed', '')),
-      ...vars,
+/** Вызвать колбэк один раз, когда элемент войдёт во вьюпорт. */
+export function onceVisible(el: Element | null, cb: () => void, rootMargin = '0px 0px -12% 0px') {
+  if (!el) return;
+  const io = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      cb();
     },
+    { rootMargin },
   );
+  io.observe(el);
 }

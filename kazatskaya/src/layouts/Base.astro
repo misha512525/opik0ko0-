@@ -104,11 +104,6 @@ const jsonLd = {
         const d = document.documentElement;
         d.classList.add('js');
         if (!matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('motion-ok');
-        try {
-          if (sessionStorage.getItem('ak-intro')) d.classList.add('intro-seen');
-        } catch {
-          /* приватный режим — интро покажется */
-        }
         // Страховка: если скрипты не загрузились — показываем всё без анимаций
         setTimeout(() => {
           if (!window.__akReady) d.classList.remove('motion-ok');

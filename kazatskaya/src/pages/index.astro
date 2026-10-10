@@ -3,10 +3,7 @@ import { getImage } from 'astro:assets';
 import Base from '@/layouts/Base.astro';
 import anna from '@/assets/anna-hero.jpg';
 import Nav from '@/components/ui/Nav.astro';
-import Preloader from '@/components/ui/Preloader.astro';
-import Cursor from '@/components/ui/Cursor.astro';
 import Hero from '@/components/sections/Hero.astro';
-import Marquee from '@/components/sections/Marquee.astro';
 import Numbers from '@/components/sections/Numbers.astro';
 import Results from '@/components/sections/Results.astro';
 import About from '@/components/sections/About.astro';
@@ -18,6 +15,7 @@ import Reviews from '@/components/sections/Reviews.astro';
 import Faq from '@/components/sections/Faq.astro';
 import Finale from '@/components/sections/Finale.astro';
 import Footer from '@/components/sections/Footer.astro';
+import Photo from '@/components/ui/Photo.astro';
 
 // Preload LCP-фото (AVIF) — те же ширины и sizes, что в Hero
 const widths = [440, 660, 888];
@@ -36,13 +34,18 @@ const srcset = avif.map((img, i) => `${img.src} ${widths[i]}w`).join(', ');
     fetchpriority="high"
   />
   <a class="skip-link" href="#main">Перейти к содержанию</a>
-  <Preloader />
-  <Cursor />
   <Nav />
   <main id="main">
     <Hero />
-    <Marquee />
     <Numbers />
+    <div class="container band">
+      <Photo
+        name="desk"
+        class="photo--band"
+        alt="Рабочий стол: раскрытая книга, тетрадь в клетку, синяя и красная ручки в утреннем свете"
+        sizes="(min-width: 1368px) 1320px, calc(100vw - 2 * var(--gutter))"
+      />
+    </div>
     <Results />
     <About />
     <Services />
@@ -59,3 +62,12 @@ const srcset = avif.map((img, i) => `${img.src} ${widths[i]}w`).join(', ');
 <script>
   import '@/scripts/main';
 </script>
+
+<style>
+  .band {
+    padding-bottom: clamp(72px, 9vw, 128px);
+  }
+  .band:not(:has(.photo)) {
+    display: none;
+  }
+</style>

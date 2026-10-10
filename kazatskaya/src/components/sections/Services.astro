@@ -49,7 +49,7 @@ const panels = [
             inert={i !== 0}
           >
             {p.items.map((s, k) => (
-              <article class:list={['svc', `svc--${k}`]} data-card data-svc>
+              <article class:list={['svc', `svc--${k}`]} data-svc>
                 <span class="svc__mark">{s.mark}</span>
                 <h3 class="svc__title">{typo(s.title)}</h3>
                 <p class="svc__text">{typo(s.text)}</p>
