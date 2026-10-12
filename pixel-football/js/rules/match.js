@@ -138,22 +138,37 @@
       return best;
     }
     // Выбор адресата паса по направлению стика
+    // Ассистент паса (как в FIFA): из партнёров в направлении стика (или взгляда) выбираем
+    // открытого, с безопасной линией паса, и считаем точку с упреждением по его бегу (this.passLead).
     passTarget(p, ix, iy, far) {
-      const t = p.team;
-      let dx = ix, dy = iy;
-      if (Math.hypot(dx, dy) < 0.3) { dx = Math.cos(p.facing); dy = Math.sin(p.facing); }
-      const dl = Math.hypot(dx, dy); dx /= dl; dy /= dl;
-      let best = null, bs = -1e9;
-      for (const q of t.players) {
-        if (q === p || q.off) continue;
-        const vx = q.x - p.x, vy = q.y - p.y, d = Math.hypot(vx, vy);
-        if (d < 3) continue;
-        const cos = (vx * dx + vy * dy) / d;
-        if (cos < 0.35) continue;
-        let s = cos * 3 - (far ? Math.abs(d - 30) / 18 : d / 22);
-        if (q.isGK) s -= 1.2;
-        if (s > bs) { bs = s; best = q; }
+      const t = p.team, b = this.ball;
+      const hasDir = Math.hypot(ix, iy) > 0.3;
+      let dx = hasDir ? ix : Math.cos(p.facing), dy = hasDir ? iy : Math.sin(p.facing);
+      const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+      const pa = AI.ax(t, p.x), offLine = t.ctx.offLine || L / 2;
+      let best = null, bs = -1e9, lx = 0, ly = 0;
+      for (let pass = 0; pass < 2 && !best; pass++) {
+        const minCos = pass ? 0 : hasDir ? 0.5 : 0.2; // второй проход — если в конусе никого нет
+        for (const q of t.players) {
+          if (q === p || q.off || q.state === 'down') continue;
+          const vx = q.x - p.x, vy = q.y - p.y, d = Math.hypot(vx, vy);
+          if (d < 3) continue;
+          const cos = (vx * dx + vy * dy) / d;
+          if (cos < minCos) continue;
+          // упреждение: пас в точку, куда партнёр добежит к приходу мяча
+          const T = d / (far ? 17 : 14);
+          const tx = U.clamp(q.x + q.vx * T * 0.8, 1, L - 1), ty = U.clamp(q.y + q.vy * T * 0.8, 1, W - 1);
+          const lr = AI.laneRisk(this, t, b.x, b.y, tx, ty);
+          const risk = lr.risk, open = Math.min(lr.open, 10);
+          let s = cos * (hasDir ? 3 : 1.6) - (far ? Math.abs(d - 30) / 18 : d / 26) - risk * (far ? 0.35 : 1.0) + open / 10 * 0.8;
+          const qa = AI.ax(t, q.x);
+          if (!hasDir) s += (qa - pa) / 45; // без направления — предпочитаем пас вперёд
+          if (qa > L / 2 && qa > offLine + 0.3) s -= 0.9; // адресат в офсайде
+          if (q.isGK) s -= 1.5;
+          if (s > bs) { bs = s; best = q; lx = tx; ly = ty; }
+        }
       }
+      this.passLead = best ? { x: lx, y: ly } : null;
       return best;
     }
 
@@ -163,7 +178,7 @@
       const crossZone = AI.ax(t, p.x) > C.CROSS_ZONE_X && Math.abs(p.y - MY) > 11;
       if (act === 'pass') {
         const q = this.passTarget(p, ix, iy, false);
-        if (q) { p.passTo(q.x + q.vx * 0.35, q.y + q.vy * 0.35, C.PASS_ARRIVE, 'pass', q); this.setControlled(t, q); }
+        if (q) { p.passTo(this.passLead.x, this.passLead.y, C.PASS_ARRIVE, 'pass', q); this.setControlled(t, q); }
         else { const a = Math.hypot(ix, iy) > 0.3 ? Math.atan2(iy, ix) : p.facing; p.passTo(p.x + Math.cos(a) * 12, p.y + Math.sin(a) * 12, 4, 'pass'); }
       } else if (act === 'lob') {
         if (crossZone && Math.hypot(ix, iy) < 0.5) {
@@ -179,7 +194,7 @@
           if (best) this.setControlled(t, best);
         } else {
           const q = this.passTarget(p, ix, iy, true);
-          if (q) { p.lobTo(q.x + q.vx * 0.9, q.y + q.vy * 0.9, 0, 'lob', q); this.setControlled(t, q); }
+          if (q) { p.lobTo(this.passLead.x, this.passLead.y, 0, 'lob', q); this.setControlled(t, q); }
           else { const a = Math.hypot(ix, iy) > 0.3 ? Math.atan2(iy, ix) : p.facing; p.lobTo(p.x + Math.cos(a) * 28, p.y + Math.sin(a) * 28, 0, 'lob'); }
         }
       } else if (act === 'through') {
@@ -232,11 +247,16 @@
         p = t.controlled;
       }
       if (!b.owner) this.autoSwitchFor = null;
-      // свободный мяч далеко — переключаемся на лучшего перехватчика
-      if (!b.owner && !attack) {
+      // свободный мяч: если стик не трогают, управление переходит к тому, кто быстрее к нему успеет
+      const steering = Math.hypot(ax.x, ax.y) > 0.2;
+      t.humanSteering = steering;
+      if (!b.owner) {
         this.looseT = (this.looseT || 0) + dt;
-        if (this.looseT > 0.5 && Math.hypot(p.x - b.x, p.y - b.y) > 14) {
-          const c = this.switchCandidate(t, 0, 0); if (c && c.icT + 0.6 < p.icT) this.setControlled(t, c); this.looseT = 0; p = t.controlled;
+        const forMe = b.intended === p && b.kickT < 3.5 && p.icT < 4;
+        if (this.looseT > 0.3 && !steering && !forMe && !p.charging) {
+          const c = t.ctx.chaser;
+          if (c && c !== p && !c.off && c.icT + 0.35 < p.icT) { this.setControlled(t, c); p = c; }
+          this.looseT = 0;
         }
       } else this.looseT = 0;
 
@@ -254,7 +274,10 @@
         return;
       }
       if (!p.canAct()) { p.ix = p.iy = 0; return; }
-      p.ix = ax.x; p.iy = ax.y; p.sprint = I.down('sprint');
+      t.idleT = steering ? 0 : (t.idleT || 0) + dt;
+      if (!steering && !b.owner && this.autoRun(t, p)) { /* игрок сам идёт на мяч */ }
+      else if (t.idleT > 0.8 && b.owner && b.owner.team !== t) AI.offBall(this, t, p, dt); // помощь в обороне без стика
+      else { p.ix = ax.x; p.iy = ax.y; p.sprint = I.down('sprint'); }
       p.faceX = b.x; p.faceY = b.y;
 
       if (b.owner === p) {
@@ -284,6 +307,17 @@
         if (I.pressed('shoot')) t.controlled.slide();
       }
     }
+    // Автобег управляемого игрока: навстречу пасу или на свободный мяч, пока человек не трогает стик
+    autoRun(t, p) {
+      const b = this.ball;
+      const forMe = b.intended === p && b.kickT < 3.5;
+      const best = t.ctx.chaser === p || p.icT <= (t.ctx.chaseT == null ? 99 : t.ctx.chaseT) + 0.05;
+      if (!(forMe || best) || p.icT > 4) return false;
+      const i = Math.min(p.icI + 1, C.PRED_STEPS - 1);
+      AI.moveTo(p, Ball.PRED_X[i], Ball.PRED_Y[i], true, true);
+      return true;
+    }
+
     // Выполнить буфер после приёма мяча
     runBuffer(p) {
       if (!p.buffer || !p.controlled) return false;
@@ -433,6 +467,7 @@
         this.callOffside(p);
         return;
       }
+      b.intended = null;
       if (prev && prev.team !== t) {
         for (const q of this.teams[1 - t.idx].players) q.offside = false;
         if (this.lastPass && this.lastPass.team !== t) { p.st.inter++; }
@@ -653,6 +688,7 @@
       }
       this.possTeam = t.idx;
       b.lastTouch = p;
+      b.intended = receiver && receiver !== p ? receiver : null;
     }
     registerShot(p) {
       const t = p.team, b = this.ball;

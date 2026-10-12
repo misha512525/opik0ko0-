@@ -89,13 +89,14 @@
       this.shot = null; // данные последнего удара по воротам (для статистики)
       this.kickT = 0; this.kickType = '';
       this.held = false; // в руках вратаря
+      this.intended = null; // адресат последнего паса (идёт навстречу мячу)
     }
     savePrev() { this.px = this.x; this.py = this.y; this.pz = this.z; }
     speed() { return Math.hypot(this.vx, this.vy); }
     kick(vx, vy, vz, spin, by, type) {
       this.vx = vx; this.vy = vy; this.vz = vz; this.spin = spin || 0;
       if (this.z <= 0 && vz > 0) this.z = 0.02;
-      this.owner = null; this.held = false;
+      this.owner = null; this.held = false; this.intended = null;
       this.lastTouch = by; this.lastKick = by; this.kickT = 0; this.kickType = type || 'pass';
     }
     update(dt, ev) {

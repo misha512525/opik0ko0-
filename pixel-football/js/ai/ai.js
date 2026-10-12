@@ -129,8 +129,12 @@
     // реакция: цель пересчитывается не каждый тик
     p.aiT -= dt;
     const loose = !b.owner;
-    const chasing = (loose && ctx.chaser === p && !(t.human && ctx.chaser === t.controlled)) ||
-      (!loose && !ctx.inPoss && ctx.press1 === p && !(t.human && t.controlled && Math.hypot(t.controlled.x - b.x, t.controlled.y - b.y) < 9));
+    // На свободный мяч идёт лучший перехватчик. Если это игрок человека, а человек ведёт его в сторону, —
+    // за мячом бежит второй по скорости партнёр. Адресат паса всегда идёт навстречу мячу.
+    const ctrl = t.human ? t.controlled : null;
+    const intendedMe = loose && b.intended === p && b.kickT < 3.5 && p.icT < 3.5;
+    const chasing = (loose && (ctx.chaser === p || (ctrl && ctx.chaser === ctrl && t.humanSteering && ctx.chaser2 === p))) || intendedMe ||
+      (!loose && !ctx.inPoss && ctx.press1 === p && !(ctrl && t.humanSteering && Math.hypot(ctrl.x - b.x, ctrl.y - b.y) < 9));
     const pressCall = t.human && t.pressCall && !ctx.inPoss && p === t.pressHelper;
     if (chasing || pressCall) {
       // перехват / прессинг владельца
@@ -145,7 +149,7 @@
       }
       sprint = true; urgent = true;
       p.faceX = b.x; p.faceY = b.y;
-      AI.defendActions(m, t, p, dt, pressCall ? 1 : t.human ? 0.45 : 1);
+      AI.defendActions(m, t, p, dt, pressCall ? 1 : t.human ? 0.75 : 1);
     } else if (!ctx.inPoss && !loose && ctx.press2 === p && ctx.pressD2 < 16 * t.tac.press * diff.press) {
       // второй игрок страхует: между мячом и воротами
       const c = b.owner, gx = t.dir > 0 ? 0 : L;
@@ -192,6 +196,8 @@
     }
     moveTo(p, tgtX, tgtY, sprint, urgent);
   }
+
+  AI.offBall = offBall;
 
   function moveTo(p, x, y, sprint, urgent) {
     const dx = x - p.x, dy = y - p.y, d = Math.hypot(dx, dy);
@@ -242,6 +248,8 @@
     laneOut.risk = risk; laneOut.open = open;
     return laneOut;
   }
+
+  AI.laneRisk = laneRisk;
 
   AI.evalPasses = (m, p, out, allowBack) => {
     const t = p.team, b = m.ball;
