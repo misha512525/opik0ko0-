@@ -35,6 +35,7 @@
       this.kickCD = 0;
       this.controlled = false;
       this.buffer = null; this.bufferT = 0; this.charge = 0; this.charging = false;
+      this.chAct = null; this.chT = 0; // какое действие заряжается и сколько держат кнопку
       this.offside = false;
       this.yellow = 0; this.red = false; this.off = false;
       this.skillCD = 0; this.skillDir = 1;
@@ -218,7 +219,7 @@
     startKick(type) {
       this.setState('kick', 0.22);
       this.kickCD = C.KICK_COOLDOWN;
-      this.charging = false; this.charge = 0;
+      this.charging = false; this.charge = 0; this.chAct = null;
       this.buffer = null;
       const b = this.m.ball;
       // мяч выбивается из-под ног; если он был немного в стороне — бьём туда, где он есть
@@ -344,7 +345,7 @@
       if (this.m.ball.owner === this) { this.m.ball.owner = null; this.m.ball.held = false; }
       this.setState('down', t || C.FALL_TIME);
       this.diveSave = false;
-      this.charging = false;
+      this.charging = false; this.chAct = null;
       PF.FX.dust(this.x, this.y, 4);
     }
   }

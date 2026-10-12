@@ -6,6 +6,7 @@
   const C = PF.C, U = PF.U, AI = PF.AI, Ball = PF.Ball, Player = PF.Player, Comm = PF.Comm;
   const L = C.PITCH_L, W = C.PITCH_W, MY = W / 2;
   const snd = (n, p) => PF.Audio.play(n, p);
+  const CHARGE_ACTS = ['pass', 'lob', 'through', 'shoot'];
 
   function newStats() { return { poss: 0, shots: 0, onT: 0, corners: 0, fouls: 0, yellow: 0, red: 0, offsides: 0, passes: 0, passOk: 0, tackles: 0, saves: 0 }; }
 
@@ -140,7 +141,7 @@
     // Выбор адресата паса по направлению стика
     // Ассистент паса (как в FIFA): из партнёров в направлении стика (или взгляда) выбираем
     // открытого, с безопасной линией паса, и считаем точку с упреждением по его бегу (this.passLead).
-    passTarget(p, ix, iy, far) {
+    passTarget(p, ix, iy, far, pref) {
       const t = p.team, b = this.ball;
       const hasDir = Math.hypot(ix, iy) > 0.3;
       let dx = hasDir ? ix : Math.cos(p.facing), dy = hasDir ? iy : Math.sin(p.facing);
@@ -160,7 +161,9 @@
           const tx = U.clamp(q.x + q.vx * T * 0.8, 1, L - 1), ty = U.clamp(q.y + q.vy * T * 0.8, 1, W - 1);
           const lr = AI.laneRisk(this, t, b.x, b.y, tx, ty);
           const risk = lr.risk, open = Math.min(lr.open, 10);
-          let s = cos * (hasDir ? 3 : 1.6) - (far ? Math.abs(d - 30) / 18 : d / 26) - risk * (far ? 0.35 : 1.0) + open / 10 * 0.8;
+          // сила паса задаёт желаемую дистанцию: слабый — ближнему, сильный — дальнему
+          const distTerm = pref != null ? Math.abs(d - pref) / 10 : far ? Math.abs(d - 30) / 18 : d / 26;
+          let s = cos * (hasDir ? 3 : 1.6) - distTerm - risk * (far ? 0.35 : 1.0) + open / 10 * 0.8;
           const qa = AI.ax(t, q.x);
           if (!hasDir) s += (qa - pa) / 45; // без направления — предпочитаем пас вперёд
           if (qa > L / 2 && qa > offLine + 0.3) s -= 0.9; // адресат в офсайде
@@ -173,47 +176,80 @@
     }
 
     // Действие человека с мячом
-    humanAction(p, act, ix, iy) {
+    // power: null — короткое нажатие (сила подбирается автоматически), 0..1 — заряженная шкала
+    humanAction(p, act, ix, iy, power) {
       const t = p.team;
+      const auto = power == null;
+      const pw = auto ? 0.35 : power;
       const crossZone = AI.ax(t, p.x) > C.CROSS_ZONE_X && Math.abs(p.y - MY) > 11;
+      const freeDir = () => (Math.hypot(ix, iy) > 0.3 ? Math.atan2(iy, ix) : p.facing);
       if (act === 'pass') {
-        const q = this.passTarget(p, ix, iy, false);
-        if (q) { p.passTo(this.passLead.x, this.passLead.y, C.PASS_ARRIVE, 'pass', q); this.setControlled(t, q); }
-        else { const a = Math.hypot(ix, iy) > 0.3 ? Math.atan2(iy, ix) : p.facing; p.passTo(p.x + Math.cos(a) * 12, p.y + Math.sin(a) * 12, 4, 'pass'); }
+        const q = this.passTarget(p, ix, iy, false, auto ? null : 5 + pw * 38);
+        // сильнее пас — быстрее мяч приходит к партнёру
+        const arrive = auto ? C.PASS_ARRIVE : U.lerp(4, 14, pw);
+        if (q) { p.passTo(this.passLead.x, this.passLead.y, arrive, 'pass', q); this.setControlled(t, q); }
+        else { const a = freeDir(), d = 8 + pw * 35; p.passTo(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d, 4, 'pass'); }
       } else if (act === 'lob') {
         if (crossZone && Math.hypot(ix, iy) < 0.5) {
-          // навес в штрафную на лучшего игрока
-          let best = null, bs = -1;
+          // навес в штрафную: без заряда — на сильного в воздухе, с зарядом — сила выбирает ближнюю/дальнюю штангу
+          let best = null, bs = -1e9;
+          const pref = 10 + pw * 30;
           for (const q of t.players) {
             if (q === p || q.off || q.isGK) continue;
-            if (this.inBox(q.x, q.y, this.teams[1 - t.idx], 2)) { const s = q.s.phy + Math.random() * 20; if (s > bs) { bs = s; best = q; } }
+            if (!this.inBox(q.x, q.y, this.teams[1 - t.idx], 2)) continue;
+            const s = auto ? q.s.phy + Math.random() * 20 : -Math.abs(Math.hypot(q.x - p.x, q.y - p.y) - pref);
+            if (s > bs) { bs = s; best = q; }
           }
-          const gx = t.dir > 0 ? L - 8 : 8;
-          const tx = best ? best.x : gx, ty = best ? best.y : MY;
+          let tx, ty;
+          if (best) { tx = best.x; ty = best.y; }
+          else { // в зону: глубина подачи по силе
+            const gx = t.dir > 0 ? L - 8 : 8;
+            ty = U.lerp(p.y, W - p.y, U.clamp(0.25 + pw * 0.6, 0, 1)); tx = gx;
+          }
           p.lobTo(tx, ty, 1.5, 'cross', best);
           if (best) this.setControlled(t, best);
         } else {
-          const q = this.passTarget(p, ix, iy, true);
+          const q = this.passTarget(p, ix, iy, true, auto ? null : 14 + pw * 42);
           if (q) { p.lobTo(this.passLead.x, this.passLead.y, 0, 'lob', q); this.setControlled(t, q); }
-          else { const a = Math.hypot(ix, iy) > 0.3 ? Math.atan2(iy, ix) : p.facing; p.lobTo(p.x + Math.cos(a) * 28, p.y + Math.sin(a) * 28, 0, 'lob'); }
+          else { const a = freeDir(), d = 15 + pw * 45; p.lobTo(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d, 0, 'lob'); }
         }
       } else if (act === 'through') {
-        const q = this.passTarget(p, ix, iy, false);
+        const q = this.passTarget(p, ix, iy, false, auto ? null : 8 + pw * 30);
         if (q) {
-          const lead = 7 + q.s.spd / 25;
+          // сила паса на ход — насколько далеко вперёд забрасываем мяч
+          const lead = auto ? 7 + q.s.spd / 25 : 3 + pw * 16;
           const gx = t.dir > 0 ? L : 0;
           let dx = t.dir, dy = (MY - q.y) * 0.015;
           if (Math.hypot(ix, iy) > 0.3) { dx = ix; dy = iy; }
           const dl = Math.hypot(dx, dy) || 1;
           let tx = q.x + dx / dl * lead, ty = q.y + dy / dl * lead;
           tx = t.dir > 0 ? Math.min(tx, gx - 3) : Math.max(tx, gx + 3); ty = U.clamp(ty, 2, W - 2);
-          p.passTo(tx, ty, 8, 'through', q);
+          p.passTo(tx, ty, auto ? 8 : U.lerp(6, 11, pw), 'through', q);
           q.runT = 2.2; q.runX = tx; q.runY = ty;
           this.setControlled(t, q);
         }
       } else if (act === 'shoot') {
-        this.humanShoot(p, Math.max(0.25, p.charge), ix, iy);
+        this.humanShoot(p, Math.max(0.25, pw), ix, iy);
       }
+    }
+
+    // Заряд действия человека: нажал — копится сила, отпустил (или шкала полная) — исполняем.
+    // exec(p, act, ix, iy, power); power = null при коротком нажатии (кроме удара)
+    chargeAction(p, dt, ax, exec) {
+      const I = PF.Input;
+      if (!p.chAct) {
+        for (const a of CHARGE_ACTS) if (I.pressed(a)) { p.chAct = a; p.charge = 0; p.chT = 0; break; }
+        if (!p.chAct) return false;
+      }
+      p.charging = true;
+      p.chT += dt;
+      p.charge = Math.min(1.1, p.charge + dt / C.CHARGE_TIME[p.chAct]);
+      if (I.down(p.chAct) && p.charge < 1.1) return true;
+      const act = p.chAct;
+      const power = p.chT < C.TAP_TIME && act !== 'shoot' ? null : Math.min(1, p.charge);
+      p.chAct = null; p.charging = false; p.charge = 0;
+      exec(p, act, ax.x, ax.y, power);
+      return true;
     }
     humanShoot(p, power, ix, iy) {
       const t = p.team;
@@ -269,8 +305,19 @@
         p.ix = ax.x * 0.6; p.iy = ax.y * 0.6; p.sprint = false;
         p.holdT += dt;
         if (p.holdT > 6) { AI.gkDistribute(this, t, p); return; }
-        if (I.pressed('pass') || I.pressed('through')) { const q = this.passTarget(p, ax.x, ax.y, false); if (q) { p.passTo(q.x, q.y, 6, 'pass', q); b.held = false; this.setControlled(t, q); } }
-        else if (I.pressed('lob') || I.pressed('shoot')) { const q = this.passTarget(p, ax.x, ax.y, true); const tx = q ? q.x : p.x + t.dir * 40, ty = q ? q.y : MY; p.lobTo(tx, ty, 0, 'lob', q); b.held = false; if (q) this.setControlled(t, q); }
+        this.chargeAction(p, dt, ax, (pp, act, x, y, power) => {
+          const pw = power == null ? 0.35 : power;
+          if (act === 'pass' || act === 'through') {
+            const q = this.passTarget(pp, x, y, false, power == null ? null : 6 + pw * 34);
+            if (!q) return;
+            pp.passTo(this.passLead.x, this.passLead.y, power == null ? 6 : U.lerp(4, 13, pw), 'pass', q); b.held = false; this.setControlled(t, q);
+          } else {
+            // K/L — выбить рукой/ногой далеко: сила = дальность
+            const q = this.passTarget(pp, x, y, true, power == null ? null : 20 + pw * 45);
+            const tx = q ? this.passLead.x : pp.x + t.dir * (20 + pw * 45), ty = q ? this.passLead.y : MY;
+            pp.lobTo(tx, ty, 0, 'lob', q); b.held = false; if (q) this.setControlled(t, q);
+          }
+        });
         return;
       }
       if (!p.canAct()) { p.ix = p.iy = 0; return; }
@@ -281,26 +328,24 @@
       p.faceX = b.x; p.faceY = b.y;
 
       if (b.owner === p) {
-        if (I.pressed('pass')) return this.humanAction(p, 'pass', ax.x, ax.y);
-        if (I.pressed('lob')) return this.humanAction(p, 'lob', ax.x, ax.y);
-        if (I.pressed('through')) return this.humanAction(p, 'through', ax.x, ax.y);
-        if (I.pressed('skill')) return p.skill(ax.x, ax.y);
-        if (I.down('shoot')) {
-          p.charging = true;
-          p.charge = Math.min(1.12, p.charge + dt / C.SHOT_CHARGE_TIME);
-          if (p.charge >= 1.12) { this.humanAction(p, 'shoot', ax.x, ax.y); return; }
-        } else if (p.charging) { this.humanAction(p, 'shoot', ax.x, ax.y); return; }
+        if (I.pressed('skill') && !p.chAct) return p.skill(ax.x, ax.y);
+        this.chargeAction(p, dt, ax, (pp, act, x, y, power) => this.humanAction(pp, act, x, y, power));
         return;
       }
+      // мяч потерян во время заряда — отменяем
+      if (p.chAct) { p.chAct = null; p.charging = false; p.charge = 0; }
       // без мяча
       if (attack || (!b.owner && Math.hypot(p.x - b.x, p.y - b.y) < 6)) {
-        // буфер первого касания: удар/пас сразу после приёма
-        if (I.pressed('pass')) { p.buffer = 'pass'; p.bufferT = C.ACTION_BUFFER; if (!b.owner && p.icT > 1.2) { const c = this.switchCandidate(t, ax.x, ax.y); if (c) this.setControlled(t, c); } }
-        if (I.pressed('lob')) { p.buffer = 'lob'; p.bufferT = C.ACTION_BUFFER; }
-        if (I.pressed('through')) { p.buffer = 'through'; p.bufferT = C.ACTION_BUFFER; }
-        if (I.down('shoot')) { p.buffer = 'shoot'; p.bufferT = C.ACTION_BUFFER; p.charge = Math.min(1, p.charge + dt / C.SHOT_CHARGE_TIME); }
-        else if (p.buffer !== 'shoot') p.charge = 0;
-        if (I.pressed('skill') && !b.owner) { /* ничего */ }
+        // буфер первого касания: пас/удар сразу после приёма; пока кнопку держат — копится сила
+        for (const a of CHARGE_ACTS) if (I.pressed(a)) {
+          p.buffer = a; p.bufferT = C.ACTION_BUFFER; p.charge = 0; p.chT = 0;
+          if (a === 'pass' && !b.owner && p.icT > 1.2) { const c = this.switchCandidate(t, ax.x, ax.y); if (c) { this.setControlled(t, c); c.buffer = a; c.bufferT = C.ACTION_BUFFER; c.charge = 0; c.chT = 0; p = c; } }
+        }
+        if (p.buffer && I.down(p.buffer)) {
+          p.charge = Math.min(1, p.charge + dt / C.CHARGE_TIME[p.buffer]); p.chT += dt;
+          p.bufferT = Math.max(p.bufferT, 0.15);
+        }
+        p.charging = !!p.buffer && p.chT > C.TAP_TIME;
       } else {
         if (I.pressed('pass')) { const c = this.switchCandidate(t, ax.x, ax.y); if (c) this.setControlled(t, c); }
         if (I.pressed('lob')) t.controlled.tackle();
@@ -323,8 +368,11 @@
       if (!p.buffer || !p.controlled) return false;
       const a = PF.Input.axis();
       const act = p.buffer; p.buffer = null;
-      if (act === 'shoot') { this.humanShoot(p, Math.max(0.35, p.charge), a.x, a.y); return true; }
-      this.humanAction(p, act, a.x, a.y);
+      // кнопка ещё зажата — продолжаем копить силу уже с мячом, удар/пас по отпусканию
+      if (PF.Input.down(act)) { p.chAct = act; p.charging = true; return false; }
+      const power = p.chT < C.TAP_TIME && act !== 'shoot' ? null : Math.max(act === 'shoot' ? 0.35 : 0, Math.min(1, p.charge));
+      p.charge = 0; p.charging = false;
+      this.humanAction(p, act, a.x, a.y, power);
       return true;
     }
 
@@ -747,7 +795,7 @@
       this.pending = pending;
       this.setState('stopped');
       if (!noWhistle && pending.type !== 'throw' && pending.type !== 'goalkick' && pending.type !== 'corner') snd('whistle', 1);
-      for (const p of this.all) { p.charging = false; p.buffer = null; p.runT = 0; }
+      for (const p of this.all) { p.charging = false; p.chAct = null; p.charge = 0; p.buffer = null; p.runT = 0; }
       if (this.ball.owner && !this.ball.held) this.ball.owner = null;
       this.lastPass = null;
       if (pending.type === 'corner') { this.teams[pending.team].stats.corners++; Comm.say('corner', { team: this.teams[pending.team].short }); this.showBanner('УГЛОВОЙ', null, 1.4); }
@@ -1218,19 +1266,15 @@
         }
       }
       const shootType = sp.type === 'penalty' || (sp.type === 'free' && this.isShootingFK(t, sp));
-      if (shootType && I.down('shoot')) { p.charging = true; p.charge = Math.min(1.1, p.charge + dt / C.SHOT_CHARGE_TIME); if (p.charge < 1.1) return; }
-      const go = (shootType && (p.charging && (!I.down('shoot') || p.charge >= 1.1))) ? 'shoot'
-        : I.pressed('pass') ? 'pass' : I.pressed('lob') ? 'lob' : I.pressed('through') ? 'through' : (I.pressed('shoot') && !shootType) ? 'lob' : null;
-      if (!go) return;
-      this.spExecute(sp, go, a);
+      this.chargeAction(p, dt, a, (pp, act, x, y, power) => this.spExecute(sp, act === 'shoot' && !shootType ? 'lob' : act, a, power));
     }
-    spExecute(sp, go, a) {
+    spExecute(sp, go, a, power) {
       const p = sp.taker, t = p.team, b = this.ball;
       this.spKick = sp.type;
       b.x = sp.type === 'throw' ? p.x : sp.x; b.y = sp.type === 'throw' ? (sp.y < MY ? 0.3 : W - 0.3) : sp.y; b.z = sp.type === 'throw' ? 1.8 : 0;
       p.setState('move');
       if (go === 'shoot') {
-        const power = Math.max(0.3, p.charge);
+        power = Math.max(0.3, power == null ? 0.3 : power);
         const aimY = sp.aimY || MY;
         const isPen = sp.type === 'penalty';
         const aimZ = isPen ? 0.3 + power * 1.6 : 1.7 + power * 0.6;
@@ -1239,16 +1283,17 @@
       } else if (sp.type === 'throw') {
         const q = this.passTarget(p, a.x || (sp.aimX - sp.x), a.y || (sp.aimY - sp.y), go === 'lob');
         const tx = q ? q.x : sp.aimX, ty = q ? q.y : sp.aimY;
-        const d = Math.min(go === 'lob' ? 26 : 16, Math.hypot(tx - b.x, ty - b.y));
+        // сила вбрасывания ограничивает дальность
+        const maxD = power == null ? (go === 'lob' ? 26 : 16) : 6 + power * 22;
+        const d = Math.min(maxD, Math.hypot(tx - b.x, ty - b.y));
         const ang = Math.atan2(ty - b.y, tx - b.x);
         p.lobTo(b.x + Math.cos(ang) * d, b.y + Math.sin(ang) * d, 0.6, 'throw', q);
         p.setState('throw', 0.35);
         if (q && t.human) this.setControlled(t, q);
       } else if (sp.type === 'corner' && go !== 'pass') {
-        this.humanAction(p, 'lob', 0, 0);
+        this.humanAction(p, 'lob', 0, 0, power);
       } else {
-        p.charge = 0;
-        this.humanAction(p, go, a.x || (sp.aimX - sp.x) / 14, a.y || (sp.aimY - sp.y) / 14);
+        this.humanAction(p, go, a.x || (sp.aimX - sp.x) / 14, a.y || (sp.aimY - sp.y) / 14, power);
       }
       p.kickCD = 0.6;
       this.afterSetPiece(sp);

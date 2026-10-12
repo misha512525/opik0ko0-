@@ -132,10 +132,10 @@
     }
     const t = sp.taker.team;
     let s;
-    if (sp.type === 'penalty' || (sp.type === 'free' && m.isShootingFK(t, sp))) s = '▲▼ ПРИЦЕЛ  L - УДАР (ДЕРЖАТЬ)  J - ПАС';
-    else if (sp.type === 'throw') s = 'J - КОРОТКИЙ АУТ   K - ДАЛЬНИЙ АУТ';
-    else if (sp.type === 'corner') s = 'K - ПОДАЧА   J - РОЗЫГРЫШ';
-    else s = 'J - ПАС   K - ДЛИННЫЙ   U - НА ХОД';
+    if (sp.type === 'penalty' || (sp.type === 'free' && m.isShootingFK(t, sp))) s = '▲▼ ПРИЦЕЛ  L - УДАР  J - ПАС  (ДЕРЖИ = СИЛА)';
+    else if (sp.type === 'throw') s = 'J - КОРОТКИЙ  K - ДАЛЬНИЙ АУТ  (ДЕРЖИ = СИЛА)';
+    else if (sp.type === 'corner') s = 'K - ПОДАЧА  J - РОЗЫГРЫШ  (ДЕРЖИ = СИЛА)';
+    else s = 'J ПАС  K ДЛИННЫЙ  U НА ХОД  (ДЕРЖИ = СИЛА)';
     const w = F.width(s) + 8;
     box(ctx, Math.round(C.W / 2 - w / 2), C.H - 53, w, 9, 'rgba(6,10,20,0.8)');
     F.draw(ctx, s, C.W / 2, C.H - 52, COL.accent2, 1, 1);

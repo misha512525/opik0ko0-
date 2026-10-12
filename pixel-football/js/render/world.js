@@ -38,6 +38,9 @@
     }
   }
 
+  // Подписи и цвета шкалы силы: J пас, K навес, U на ход, L удар
+  const BAR = { pass: ['J', '#3cf0a0'], lob: ['K', '#4fa3ff'], through: ['U', '#40e0e0'], shoot: ['L', '#ffd23c'] };
+
   const W = {};
   W.draw = (ctx, m, cam, alpha, replay, rt) => {
     prepare(m, alpha, replay);
@@ -117,12 +120,18 @@
       if (sx > -4 && sx < cam.vw + 4 && sy > 0 && sy < cam.vh + 24) {
         ctx.fillStyle = '#140f1c'; ctx.fillRect(sx - 3, sy - 27 + bob, 7, 1); ctx.fillRect(sx - 2, sy - 26 + bob, 5, 1); ctx.fillRect(sx - 1, sy - 25 + bob, 3, 1);
         ctx.fillStyle = col; ctx.fillRect(sx - 2, sy - 27 + bob, 5, 1); ctx.fillRect(sx - 1, sy - 26 + bob, 3, 1);
-        // шкала силы удара
-        if (p.charging || (p.buffer === 'shoot' && p.charge > 0)) {
-          const w = 16, f = Math.min(1, p.charge);
-          ctx.fillStyle = '#140f1c'; ctx.fillRect(sx - w / 2 - 1, sy - 33, w + 2, 4);
-          ctx.fillStyle = f > 0.9 ? C.COL.red : f > 0.6 ? C.COL.accent2 : C.COL.accent;
-          ctx.fillRect(sx - w / 2, sy - 32, Math.round(w * f), 2);
+        // шкала силы паса / навеса / паса на ход / удара
+        const act = p.chAct || (p.buffer && p.chT > C.TAP_TIME ? p.buffer : null);
+        if (act && p.charging) {
+          const w = 24, f = Math.min(1, p.charge), by = sy - 36;
+          const meta = BAR[act];
+          ctx.fillStyle = '#140f1c'; ctx.fillRect(sx - w / 2 - 1, by - 1, w + 2, 6);
+          ctx.fillStyle = '#2a3150'; ctx.fillRect(sx - w / 2, by, w, 4);
+          ctx.fillStyle = act === 'shoot' && f > 0.88 ? C.COL.red : meta[1];
+          ctx.fillRect(sx - w / 2, by, Math.round(w * f), 4);
+          ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(sx - w / 2, by, Math.round(w * f), 1);
+          if (act === 'shoot') { ctx.fillStyle = '#140f1c'; ctx.fillRect(sx - w / 2 + Math.round(w * 0.88), by, 1, 4); } // дальше — риск «перезаряда»
+          PF.Font.draw(ctx, meta[0], sx - w / 2 - 2, by - 1, meta[1], 1, 2, '#140f1c');
         }
       } else {
         // стрелка у края экрана
