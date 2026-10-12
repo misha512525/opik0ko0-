@@ -530,16 +530,15 @@
         }
         return;
       }
-      if (!p.controlled || true) {
-        if (dGoal < 15 && AI.ax(t, p.x) > 80) {
-          const aimY = AI.shotAim(this, p);
-          p.header(gx - p.x, aimY - p.y, 12 + p.s.phy / 12, -0.8 + Math.random() * 1.2, 'shot');
-        } else if (AI.ax(t, p.x) < 40) {
-          p.header(t.dir, (p.y < MY ? -0.5 : 0.5), 15, 5, 'clear');
-        } else {
-          const q = this.passTarget(p, t.dir, 0, false);
-          if (q) p.header(q.x - p.x, q.y - p.y, 11, 2.5); else p.header(t.dir, 0, 11, 3);
-        }
+      // ИИ (или человек без нажатия): удар у чужих ворот, вынос у своих, иначе скидка партнёру
+      if (dGoal < 15 && AI.ax(t, p.x) > 80) {
+        const aimY = AI.shotAim(this, p);
+        p.header(gx - p.x, aimY - p.y, 12 + p.s.phy / 12, -0.8 + Math.random() * 1.2, 'shot');
+      } else if (AI.ax(t, p.x) < 40) {
+        p.header(t.dir, (p.y < MY ? -0.5 : 0.5), 15, 5, 'clear');
+      } else {
+        const q = this.passTarget(p, t.dir, 0, false);
+        if (q) p.header(q.x - p.x, q.y - p.y, 11, 2.5); else p.header(t.dir, 0, 11, 3);
       }
     }
 
@@ -1017,7 +1016,7 @@
     }
 
     beginSetPiece(sp) {
-      const b = this.ball, t = this.teams[sp.team], opp = this.teams[1 - sp.team];
+      const b = this.ball, t = this.teams[sp.team];
       b.reset(sp.x, sp.y);
       sp.t = 0;
       this.possTeam = sp.team;
@@ -1191,7 +1190,6 @@
     }
     spExecute(sp, go, a) {
       const p = sp.taker, t = p.team, b = this.ball;
-      const gx = t.dir > 0 ? L : 0;
       this.spKick = sp.type;
       b.x = sp.type === 'throw' ? p.x : sp.x; b.y = sp.type === 'throw' ? (sp.y < MY ? 0.3 : W - 0.3) : sp.y; b.z = sp.type === 'throw' ? 1.8 : 0;
       p.setState('move');

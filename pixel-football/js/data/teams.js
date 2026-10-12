@@ -169,7 +169,7 @@
     if (U.colorDist(hk.p, ak.p) < 130) ak = { p: U.luma(hk.p) > 0.5 ? '#1a1a1a' : '#f4f4f4', s: ak.p, pat: 'plain', shorts: '#555555', socks: '#555555' };
     const gkOpts = ['#30c050', '#f0d020', '#e040a0', '#ff8020', '#202020', '#40e0e0'];
     const gk = [];
-    for (const k of [hk, ak]) {
+    for (let k = 0; k < 2; k++) {
       let best = gkOpts[0], bd = -1;
       for (const o of gkOpts) {
         if (gk.length && o === gk[0].p) continue;

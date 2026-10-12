@@ -3,7 +3,6 @@
 // Статы влияют на скорость, точность, силу, приём, отбор и выносливость.
 (function (PF) {
   const C = PF.C, U = PF.U, POSE = PF.POSE, DIR = PF.DIR;
-  const MID_Y = C.PITCH_W / 2;
 
   // Подбор начальной скорости низового паса, чтобы мяч дошёл до цели со скоростью va.
   // Модель трения: dv/dt = -(a + k v) -> решаем бисекцией.
@@ -288,7 +287,6 @@
     }
     header(dirX, dirY, speed, vz, type) {
       const b = this.m.ball;
-      const l = Math.hypot(dirX, dirY) || 1;
       const e = this.errFor((this.s.phy + this.s.sho) / 2, 1.2);
       const a = Math.atan2(dirY, dirX) + U.gauss() * 0.12 * e;
       this.kickCD = C.KICK_COOLDOWN;

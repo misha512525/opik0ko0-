@@ -1,7 +1,6 @@
 'use strict';
 // Частицы (трава, пыль, конфетти) из заранее выделенного пула — без аллокаций в цикле.
 (function (PF) {
-  const C = PF.C;
   const N = 320;
   const pool = [];
   for (let i = 0; i < N; i++) pool.push({ on: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, life: 0, max: 1, col: '#fff', g: 1, size: 1 });

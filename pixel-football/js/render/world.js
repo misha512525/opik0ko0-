@@ -2,7 +2,6 @@
 // Отрисовка игрового мира: трибуны, поле, ворота, тени, игроки и мяч с сортировкой по глубине.
 (function (PF) {
   const C = PF.C, U = PF.U, S = PF.Sprites, Proj = PF.Proj;
-  const MY = C.PITCH_W / 2;
   // Пул элементов сортировки — без аллокаций в кадре
   const items = [];
   for (let i = 0; i < 40; i++) items.push({ y: 0, k: 0, o: null });
@@ -91,6 +90,17 @@
       }
     }
     PF.FX.draw(ctx, cam);
+    if (m.o.night) {
+      // вечерний матч: синеватая тень и пятна прожекторов на газоне
+      ctx.fillStyle = 'rgba(6,10,40,0.32)'; ctx.fillRect(0, 0, cam.vw + 1, cam.vh + 1);
+      ctx.fillStyle = 'rgba(255,250,210,0.05)';
+      for (let i = 0; i < 4; i++) {
+        const lx = Proj.sx(10 + i * 28, 34) - ox;
+        if (lx < -90 || lx > cam.vw + 90) continue;
+        ctx.fillRect(Math.round(lx - 70), 0, 140, cam.vh);
+        ctx.fillRect(Math.round(lx - 40), 0, 80, cam.vh);
+      }
+    }
     if (!replay) W.overlays(ctx, m, cam, rt);
     ctx.restore();
   };

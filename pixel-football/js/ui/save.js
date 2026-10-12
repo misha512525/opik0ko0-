@@ -21,11 +21,11 @@
         const d = raw ? JSON.parse(raw) : null;
         this.data = Object.assign(def(), d || {});
         this.data.settings = Object.assign(def().settings, (d && d.settings) || {});
-      } catch (e) { this.data = def(); }
+      } catch (err) { this.data = def(); } // повреждённое сохранение — начинаем заново
       return this.data;
     },
     save() {
-      try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { /* приватный режим — играем без сохранения */ }
+      try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (err) { /* приватный режим — играем без сохранения */ }
     },
     reset() { this.data = def(); this.save(); },
     // Тактика и состав команды (по умолчанию — из базы)

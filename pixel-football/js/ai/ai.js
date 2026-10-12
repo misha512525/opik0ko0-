@@ -196,9 +196,10 @@
   function moveTo(p, x, y, sprint, urgent) {
     const dx = x - p.x, dy = y - p.y, d = Math.hypot(dx, dy);
     if (d < (urgent ? 0.15 : 0.7)) { p.ix = 0; p.iy = 0; p.sprint = false; return; }
-    const mag = urgent ? 1 : U.clamp(d / 5, 0.22, 1);
+    // без спешки — трусцой, с ускорением по мере отставания от позиции
+    const mag = urgent ? 1 : U.clamp(d / 8, 0.18, 0.85);
     p.ix = dx / d * mag; p.iy = dy / d * mag;
-    p.sprint = sprint || d > 14;
+    p.sprint = sprint || d > 18;
   }
   AI.moveTo = moveTo;
 
@@ -298,7 +299,7 @@
   };
 
   function carrier(m, t, p, dt) {
-    const b = m.ball, ctx = t.ctx, diff = m.diff;
+    const diff = m.diff;
     p.holdT += dt;
     p.aiT -= dt;
     const opp = m.teams[1 - t.idx];

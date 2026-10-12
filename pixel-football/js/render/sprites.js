@@ -9,7 +9,7 @@
   const AX = 12, AY = 23; // точка «ступней» внутри клетки
 
   // Индексы палитры
-  const T = 0, OL = 1, SK = 2, SKS = 3, HR = 4, JR = 5, JRS = 6, TR = 7, SH = 8, SHS = 9, SO = 10, BO = 11, EY = 12, GL = 13, WH = 14, TRS = 15, SOS = 16, HRS = 17;
+  const OL = 1, SK = 2, SKS = 3, HR = 4, JR = 5, JRS = 6, TR = 7, SH = 8, SHS = 9, SO = 10, BO = 11, EY = 12, GL = 13, WH = 14, TRS = 15, SOS = 16, HRS = 17;
   const SHADE = new Uint8Array(32);
   for (let i = 0; i < 32; i++) SHADE[i] = i;
   SHADE[SK] = SKS; SHADE[JR] = JRS; SHADE[TR] = TRS; SHADE[SH] = SHS; SHADE[SO] = SOS; SHADE[HR] = HRS;
