@@ -9,8 +9,11 @@
   // Масштаб: целый коэффициент, если помещается; иначе дробный (маленькие экраны)
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    let k = Math.floor(Math.min(w / C.W, h / C.H));
-    if (k < 1) k = Math.min(w / C.W, h / C.H);
+    const fit = Math.min(w / C.W, h / C.H);
+    let k = Math.floor(fit);
+    // на маленьких экранах (телефоны) целый коэффициент оставляет много пустоты — тогда дробный
+    if (k < 2 && fit > k * 1.25) k = fit;
+    if (k < 1) k = fit;
     canvas.style.width = Math.round(C.W * k) + 'px';
     canvas.style.height = Math.round(C.H * k) + 'px';
   }
