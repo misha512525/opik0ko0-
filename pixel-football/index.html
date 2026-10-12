@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
+<title>Пиксель Лига 27</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap"><canvas id="screen" width="384" height="216" aria-label="Пиксель Лига 27"></canvas></div>
+<!-- Сенсорное управление: показывается только на устройствах с тачем -->
+<div id="touch" hidden>
+  <div id="stick"><div id="knob"></div></div>
+  <div id="tbtns">
+    <button data-k="KeyJ">J<br><small>ПАС</small></button>
+    <button data-k="KeyK">K<br><small>НАВЕС</small></button>
+    <button data-k="KeyL">L<br><small>УДАР</small></button>
+    <button data-k="KeyU">U<br><small>НА ХОД</small></button>
+    <button data-k="ShiftLeft">⇧<br><small>СПРИНТ</small></button>
+    <button data-k="KeyI">I<br><small>ФИНТ</small></button>
+    <button data-k="Space">␣<br><small>ПРЕСС</small></button>
+    <button data-k="Escape">II<br><small>ПАУЗА</small></button>
+  </div>
+</div>
+<noscript>Для игры нужен JavaScript.</noscript>
+<!-- Порядок важен: модули регистрируются в глобальном пространстве имён PF -->
+<script src="js/config.js"></script>
+<script src="js/engine/util.js"></script>
+<script src="js/engine/font.js"></script>
+<script src="js/engine/input.js"></script>
+<script src="js/engine/audio.js"></script>
+<script src="js/engine/camera.js"></script>
+<script src="js/engine/loop.js"></script>
+<script src="js/data/names.js"></script>
+<script src="js/data/formations.js"></script>
+<script src="js/data/teams.js"></script>
+<script src="js/render/sprites.js"></script>
+<script src="js/render/pitch.js"></script>
+<script src="js/render/fx.js"></script>
+<script src="js/entities/ball.js"></script>
+<script src="js/entities/player.js"></script>
+<script src="js/ai/ai.js"></script>
+<script src="js/rules/commentary.js"></script>
+<script src="js/rules/replay.js"></script>
+<script src="js/rules/match.js"></script>
+<script src="js/render/hud.js"></script>
+<script src="js/render/world.js"></script>
+<script src="js/ui/save.js"></script>
+<script src="js/ui/widgets.js"></script>
+<script src="js/ui/menus.js"></script>
+<script src="js/ui/matchscreen.js"></script>
+<script src="js/ui/modes.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
