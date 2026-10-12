@@ -25,7 +25,7 @@
 
   const padPrev = {};
   const axis = { x: 0, y: 0 };
-  const touchAxis = { x: 0, y: 0, on: false };
+  const touchAxis = { x: 0, y: 0, on: false, full: false }; // full — стик до упора = спринт
   let padAxisX = 0, padAxisY = 0;
   let anyPressed = false;
   const listeners = [];
@@ -78,7 +78,7 @@
     anyPressed = false;
     for (const a of ACTIONS) {
       const s = state[a];
-      const pd = !!(padDown && padDown[a]);
+      const pd = !!(padDown && padDown[a]) || (a === 'sprint' && touchAxis.on && touchAxis.full);
       if (pd && !padPrev[a]) s.latchP = true;
       if (!pd && padPrev[a] && !isDownByKeys(a)) s.latchR = true;
       padPrev[a] = pd;
@@ -139,6 +139,27 @@
     const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
     if (!isTouch) return;
     touchUI.hidden = false;
+    document.body.classList.add('touch');
+    // тап по экрану в меню = «ОК» (в матче экран не трогаем — там кнопки)
+    const cv = document.getElementById('screen');
+    if (cv) cv.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      PF.Audio && PF.Audio.unlock();
+      if (PF.App && PF.App.top && !PF.App.top.m) { onKey('Enter', true); setTimeout(() => onKey('Enter', false), 80); }
+    }, { passive: false });
+    // полноэкранный режим + альбомная ориентация (где поддерживается)
+    const fs = document.getElementById('fs');
+    const de = document.documentElement;
+    if (fs && (de.requestFullscreen || de.webkitRequestFullscreen)) {
+      fs.hidden = false;
+      fs.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const req = de.requestFullscreen ? de.requestFullscreen() : de.webkitRequestFullscreen();
+        Promise.resolve(req).then(() => { const so = window.screen.orientation; if (so && so.lock) return so.lock('landscape'); }).catch(() => {});
+      }, { passive: false });
+      document.addEventListener('fullscreenchange', () => { fs.hidden = !!document.fullscreenElement; });
+    }
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
     const stick = document.getElementById('stick'), knob = document.getElementById('knob');
     let id = null;
     const move = (t) => {
@@ -147,7 +168,7 @@
       let dx = (t.clientX - cx) / (r.width / 2), dy = (t.clientY - cy) / (r.height / 2);
       const l = Math.hypot(dx, dy);
       if (l > 1) { dx /= l; dy /= l; }
-      touchAxis.x = l < 0.18 ? 0 : dx; touchAxis.y = l < 0.18 ? 0 : dy; touchAxis.on = true;
+      touchAxis.x = l < 0.18 ? 0 : dx; touchAxis.y = l < 0.18 ? 0 : dy; touchAxis.on = true; touchAxis.full = l > 0.92;
       knob.style.transform = `translate(${dx * r.width * 0.35}px, ${dy * r.height * 0.35}px)`;
       // для навигации по меню
       onKey('ArrowLeft', dx < -0.6); onKey('ArrowRight', dx > 0.6); onKey('ArrowUp', dy < -0.6); onKey('ArrowDown', dy > 0.6);
@@ -156,7 +177,7 @@
     stick.addEventListener('touchmove', (e) => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === id) move(t); }, { passive: false });
     const end = (e) => {
       for (const t of e.changedTouches) if (t.identifier === id) {
-        id = null; touchAxis.on = false; touchAxis.x = touchAxis.y = 0; knob.style.transform = '';
+        id = null; touchAxis.on = false; touchAxis.full = false; touchAxis.x = touchAxis.y = 0; knob.style.transform = '';
         onKey('ArrowLeft', false); onKey('ArrowRight', false); onKey('ArrowUp', false); onKey('ArrowDown', false);
       }
     };

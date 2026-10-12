@@ -8,7 +8,10 @@
 
   // Масштаб: целый коэффициент, если помещается; иначе дробный (маленькие экраны)
   function resize() {
-    const w = window.innerWidth, h = window.innerHeight;
+    const w = window.innerWidth;
+    // в портрете на телефоне под игрой остаётся место для управления
+    const portraitTouch = document.body.classList.contains('touch') && window.innerHeight > window.innerWidth;
+    const h = portraitTouch ? window.innerHeight * 0.4 : window.innerHeight;
     const fit = Math.min(w / C.W, h / C.H);
     let k = Math.floor(fit);
     // на маленьких экранах (телефоны) целый коэффициент оставляет много пустоты — тогда дробный
@@ -21,8 +24,9 @@
   resize();
 
   PF.Font.init();
-  PF.Sprites.init();
   PF.Input.init(canvas);
+  resize(); // класс body.touch появляется в Input.init
+  PF.Sprites.init();
   const save = PF.Save.load();
   PF.Audio.setVolumes(save.settings.master, save.settings.music, save.settings.sfx);
   // Звук можно включить только после жеста пользователя
