@@ -15,6 +15,10 @@ import type { TrafficLights } from '../world/TrafficLights';
 import type { Roads } from '../ai/Roads';
 import type { Traffic } from '../ai/Traffic';
 import type { Pedestrians } from '../ai/Pedestrians';
+import type { Police } from '../ai/Police';
+import type { Damage } from '../combat/Damage';
+import type { Wanted } from '../combat/Wanted';
+import type { Economy } from '../economy/Economy';
 
 /**
  * Реестр сервисов игры. Это не «god-объект»: логики здесь нет, только ссылки,
@@ -40,4 +44,8 @@ export interface GameContext {
   roads: Roads;
   traffic: Traffic;
   peds: Pedestrians;
+  police: Police;
+  damage: Damage;
+  wanted: Wanted;
+  economy: Economy;
 }

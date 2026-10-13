@@ -6,7 +6,12 @@ import type { Ped } from '../ai/Pedestrians';
 export interface GameEvents {
   notify: { text: string; seconds?: number };
   crime: { kind: CrimeKind; position: Vector3 };
-  gunshot: { position: Vector3; byPlayer: boolean };
+  gunshot: { position: Vector3; byPlayer: boolean; weapon?: string };
+  weaponChanged: { id: string };
+  dryFire: Record<string, never>;
+  reload: Record<string, never>;
+  punch: { position: Vector3 };
+  playerHurt: { amount: number; from: Vector3 | null };
   explosion: { position: Vector3; radius: number; byPlayer: boolean; source?: unknown };
   vehicleImpact: { vehicle: Vehicle; strength: number };
   driverEjected: { vehicle: Vehicle; position: Vector3 };
@@ -18,7 +23,7 @@ export interface GameEvents {
   playerDied: Record<string, never>;
   playerArrested: Record<string, never>;
   playerRespawned: { reason: 'death' | 'arrest' | 'load' };
-  moneyChanged: { amount: number; delta: number };
+  moneyChanged: { amount: number; delta: number; reason?: string };
   wantedChanged: { stars: number };
   playerEnteredVehicle: { vehicleId: number };
   playerExitedVehicle: { vehicleId: number };

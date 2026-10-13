@@ -25,7 +25,13 @@ page.on('pageerror', (e) => errors.push(`[pageerror] ${e.message}`));
 
 const sep = url.includes('?') ? '&' : '?';
 await page.goto(`${url}${sep}autotest=1`, { waitUntil: 'load' });
-await page.waitForFunction(() => window.__game !== undefined, null, { timeout: 120000 });
+try {
+  await page.waitForFunction(() => window.__game !== undefined, null, { timeout: 120000 });
+} catch (e) {
+  console.log('BOOT FAILED\n' + errors.join('\n'));
+  await browser.close();
+  process.exit(1);
+}
 await page.waitForTimeout(1500);
 
 const g = (fn, arg) => page.evaluate(fn, arg);

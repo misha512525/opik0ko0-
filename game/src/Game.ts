@@ -18,6 +18,10 @@ import { TrafficLights } from './world/TrafficLights';
 import { Roads } from './ai/Roads';
 import { Traffic } from './ai/Traffic';
 import { Pedestrians } from './ai/Pedestrians';
+import { Police } from './ai/Police';
+import { Damage } from './combat/Damage';
+import { Wanted } from './combat/Wanted';
+import { Economy } from './economy/Economy';
 
 /**
  * Корень композиции: создаёт системы, связывает их через GameContext
@@ -89,16 +93,20 @@ export class Game {
     ctx.effects.resize(window.innerHeight);
     ctx.weapons = new Weapons(ctx);
     ctx.vehicles = new VehicleManager(ctx);
+    ctx.cameraRig = new CameraRig(ctx, camera);
+    const home = city.poi('safehouse');
+    ctx.player = new Player(ctx, new THREE.Vector3(home.x, 0.2, home.z));
+    ctx.cameraRig.yaw = Math.PI;
     onProgress('Машины…');
     ctx.vehicles.spawnParked();
     ctx.lights = new TrafficLights(city, visuals.trafficBulbs);
     ctx.roads = new Roads(city);
     ctx.traffic = new Traffic(ctx, ctx.roads);
     ctx.peds = new Pedestrians(ctx);
-    ctx.cameraRig = new CameraRig(ctx, camera);
-    const home = city.poi('safehouse');
-    ctx.player = new Player(ctx, new THREE.Vector3(home.x, 0.2, home.z));
-    ctx.cameraRig.yaw = Math.PI;
+    ctx.economy = new Economy(ctx);
+    ctx.damage = new Damage(ctx);
+    ctx.wanted = new Wanted(ctx);
+    ctx.police = new Police(ctx, ctx.roads);
 
     settings.onChange((s) => {
       const qq = CONFIG.quality[s.quality];
@@ -135,10 +143,12 @@ export class Game {
     this.simTime += dt;
     c.player.fixedUpdate(dt);
     c.traffic.fixedUpdate(dt);
+    c.police.fixedUpdate(dt);
     c.vehicles.fixedUpdate(dt);
     c.physics.step();
     c.vehicles.postStep(dt);
     c.peds.fixedUpdate(dt);
+    c.damage.fixedUpdate(dt);
   }
 
   private update(dt: number, alpha: number): void {
@@ -162,6 +172,10 @@ export class Game {
       vehicles: c.vehicles.list.length,
       traffic: c.traffic.agents.length,
       peds: c.peds.list.length,
+      police: c.police.units.length,
+      stars: c.wanted.stars,
+      health: Math.round(c.player.health),
+      money: c.economy.money,
     };
   }
 
@@ -171,8 +185,11 @@ export class Game {
     c.traffic.update(dt);
     c.vehicles.update(dt, alpha);
     c.peds.update(dt);
+    c.police.update(dt);
+    c.wanted.update(dt);
     c.player.update(dt, alpha);
     c.cameraRig.update(dt);
+    c.weapons.update(dt);
     c.effects.update(dt);
     c.dayNight.update(dt, c.player.renderPosition, c.camera);
     if (this.debugEl && c.settings.data.showFps) {
