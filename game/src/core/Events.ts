@@ -31,6 +31,10 @@ export interface GameEvents {
   missionCompleted: { id: string; reward: number };
   missionFailed: { id: string; reason: string };
   dialog: { speaker: string; text: string; seconds?: number };
+  uiClick: Record<string, never>;
+  pickup: { kind: string };
+  checkpoint: { index: number; total: number };
+  respray: Record<string, never>;
 }
 
 export type CrimeKind =

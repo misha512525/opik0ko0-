@@ -19,6 +19,12 @@ import type { Police } from '../ai/Police';
 import type { Damage } from '../combat/Damage';
 import type { Wanted } from '../combat/Wanted';
 import type { Economy } from '../economy/Economy';
+import type { MissionManager } from '../missions/MissionManager';
+import type { Shops } from '../economy/Shops';
+import type { Pickups } from '../economy/Pickups';
+import type { SaveSystem } from '../save/SaveSystem';
+import type { Hud } from '../ui/Hud';
+import type { Markers } from '../fx/Markers';
 
 /**
  * Реестр сервисов игры. Это не «god-объект»: логики здесь нет, только ссылки,
@@ -48,4 +54,10 @@ export interface GameContext {
   damage: Damage;
   wanted: Wanted;
   economy: Economy;
+  missions: MissionManager;
+  shops: Shops;
+  pickups: Pickups;
+  save: SaveSystem;
+  hud: Hud;
+  markers: Markers;
 }

@@ -40,6 +40,12 @@ export class Wanted {
     });
   }
 
+  /** Где игрок сейчас (с учётом машины). */
+  private focus(): THREE.Vector3 {
+    const pv = this.ctx.vehicles.playerVehicle;
+    return this.ctx.player.mode === 'vehicle' && pv ? pv.position : this.ctx.player.position;
+  }
+
   get searchRadius(): number {
     return CONFIG.wanted.searchRadius[this.stars];
   }
@@ -64,7 +70,7 @@ export class Wanted {
     if (!this.witnessed(p) && kind !== 'killCop' && kind !== 'attackCop' && kind !== 'destroyPoliceCar') return;
     this.add(CONFIG.wanted.crimes[kind]);
     if (kind === 'killCop' && this.stars < 2) this.setStars(2);
-    this.lastKnown.copy(this.ctx.player.position);
+    this.lastKnown.copy(this.focus());
     this.evadeTimer = 0;
   }
 
@@ -80,7 +86,7 @@ export class Wanted {
     if (n === this.stars) return;
     this.stars = n;
     if (this.heat < CONFIG.wanted.thresholds[n]) this.heat = CONFIG.wanted.thresholds[n];
-    if (n > 0) this.lastKnown.copy(this.ctx.player.position);
+    if (n > 0) this.lastKnown.copy(this.focus());
     this.ctx.events.emit('wantedChanged', { stars: n });
   }
 
@@ -101,7 +107,7 @@ export class Wanted {
   update(dt: number): void {
     this.time += dt;
     if (this.stars === 0) return;
-    const pos = this.ctx.player.mode === 'vehicle' && this.ctx.vehicles.playerVehicle ? this.ctx.vehicles.playerVehicle.position : this.ctx.player.position;
+    const pos = this.focus();
     if (this.seen) {
       this.lastKnown.copy(pos);
       this.evadeTimer = 0;

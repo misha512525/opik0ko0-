@@ -9,8 +9,10 @@ async function boot() {
   loading.classList.add('hidden');
   game.start();
   const ctx = game.ctx;
-  // Клик по канвасу захватывает мышь.
-  ctx.renderer.domElement.addEventListener('click', () => ctx.input.lockPointer());
+  // Клик по канвасу во время игры возвращает захват мыши.
+  ctx.renderer.domElement.addEventListener('click', () => {
+    if (game.state === 'playing') ctx.input.lockPointer();
+  });
   if (new URLSearchParams(location.search).has('autotest')) ctx.input.freeLook = true;
   (window as unknown as { __game: Game }).__game = game;
 }

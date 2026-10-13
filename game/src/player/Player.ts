@@ -100,7 +100,17 @@ export class Player {
 
   fixedUpdate(dt: number): void {
     this.prevPosition.copy(this.position);
-    if (this.mode === 'vehicle') return;
+    if (this.mode === 'vehicle') {
+      // В машине «игрок» = машина: розыск, пикапы, ИИ и т. п. смотрят на эту точку.
+      const v = this.ctx.vehicles.playerVehicle;
+      if (v) {
+        this.position.set(v.position.x, v.position.y + 0.3, v.position.z);
+        this.prevPosition.copy(this.position);
+        this.velocity.set(0, 0, 0);
+        this.body.setNextKinematicTranslation({ x: this.position.x, y: this.position.y, z: this.position.z });
+      }
+      return;
+    }
     const cfg = CONFIG.player;
     const input = this.ctx.input;
     let wishX = 0, wishZ = 0;
@@ -182,6 +192,8 @@ export class Player {
     this.hurtFlash = Math.max(0, this.hurtFlash - dt);
     if (this.mode === 'vehicle') {
       this.model.setVisible(false);
+      const v = this.ctx.vehicles.playerVehicle;
+      if (v) this.renderPosition.copy(v.renderPosition);
       return;
     }
     this.model.setVisible(true);
