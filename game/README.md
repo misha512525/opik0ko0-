@@ -17,6 +17,14 @@ npm run build      # проверка типов (tsc) + продакшн-сбо
 npm run preview    # просмотр сборки: http://localhost:4180
 ```
 
+### Один HTML-файл
+
+```bash
+npm run build:html   # → velmont-heat.html (~5 МБ: JS, CSS и WASM-физика внутри)
+```
+
+Готовый `velmont-heat.html` открывается двойным щелчком, без сервера и интернета.
+
 Нужен Node.js 18+ и браузер с WebGL2 (Chrome, Edge, Firefox, Safari 15+).
 Параметр `?quality=low|medium|high` в адресе принудительно задаёт качество графики.
 
