@@ -14,6 +14,10 @@ import { CameraRig } from './player/CameraRig';
 import { VehicleManager } from './vehicles/VehicleManager';
 import { Weapons } from './combat/Weapons';
 import { Effects } from './fx/Particles';
+import { TrafficLights } from './world/TrafficLights';
+import { Roads } from './ai/Roads';
+import { Traffic } from './ai/Traffic';
+import { Pedestrians } from './ai/Pedestrians';
 
 /**
  * Корень композиции: создаёт системы, связывает их через GameContext
@@ -87,6 +91,10 @@ export class Game {
     ctx.vehicles = new VehicleManager(ctx);
     onProgress('Машины…');
     ctx.vehicles.spawnParked();
+    ctx.lights = new TrafficLights(city, visuals.trafficBulbs);
+    ctx.roads = new Roads(city);
+    ctx.traffic = new Traffic(ctx, ctx.roads);
+    ctx.peds = new Pedestrians(ctx);
     ctx.cameraRig = new CameraRig(ctx, camera);
     const home = city.poi('safehouse');
     ctx.player = new Player(ctx, new THREE.Vector3(home.x, 0.2, home.z));
@@ -126,9 +134,11 @@ export class Game {
     const c = this.ctx;
     this.simTime += dt;
     c.player.fixedUpdate(dt);
+    c.traffic.fixedUpdate(dt);
     c.vehicles.fixedUpdate(dt);
     c.physics.step();
     c.vehicles.postStep(dt);
+    c.peds.fixedUpdate(dt);
   }
 
   private update(dt: number, alpha: number): void {
@@ -145,12 +155,22 @@ export class Game {
   }
 
   debugStats() {
-    return { cpuMs: +this.cpuMs.toFixed(2), renderSubmitMs: +this.renderMs.toFixed(2) };
+    const c = this.ctx;
+    return {
+      cpuMs: +this.cpuMs.toFixed(2),
+      renderSubmitMs: +this.renderMs.toFixed(2),
+      vehicles: c.vehicles.list.length,
+      traffic: c.traffic.agents.length,
+      peds: c.peds.list.length,
+    };
   }
 
   private frame(dt: number, alpha: number): void {
     const c = this.ctx;
+    c.lights.update(dt);
+    c.traffic.update(dt);
     c.vehicles.update(dt, alpha);
+    c.peds.update(dt);
     c.player.update(dt, alpha);
     c.cameraRig.update(dt);
     c.effects.update(dt);

@@ -1,5 +1,6 @@
 import type { Vector3 } from 'three';
 import type { Vehicle } from '../vehicles/Vehicle';
+import type { Ped } from '../ai/Pedestrians';
 
 /** Типизированная шина событий: системы общаются без прямых зависимостей. */
 export interface GameEvents {
@@ -9,7 +10,10 @@ export interface GameEvents {
   explosion: { position: Vector3; radius: number; byPlayer: boolean; source?: unknown };
   vehicleImpact: { vehicle: Vehicle; strength: number };
   driverEjected: { vehicle: Vehicle; position: Vector3 };
-  pedKilled: { position: Vector3; role: string; byPlayer: boolean };
+  pedKilled: { position: Vector3; role: string; byPlayer: boolean; ped: Ped };
+  pedHurt: { ped: Ped; byPlayer: boolean };
+  pedHitByCar: { ped: Ped; vehicle: Vehicle; speed: number };
+  horn: { position: Vector3 };
   vehicleDestroyed: { position: Vector3; police: boolean; byPlayer: boolean; vehicle: Vehicle };
   playerDied: Record<string, never>;
   playerArrested: Record<string, never>;

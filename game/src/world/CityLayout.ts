@@ -145,6 +145,44 @@ export class CityLayout {
     this.buildLights();
     this.buildPromenade(rng);
     this.buildOutskirts(rng);
+    this.buildObstacleHash();
+  }
+
+  // ---------------------------------------------------------------- препятствия для NPC
+
+  private obstacleCells = new Map<number, Rect[]>();
+  private static readonly CELL = 25;
+
+  private buildObstacleHash(): void {
+    const add = (r: Rect) => {
+      const C = CityLayout.CELL;
+      for (let cx = Math.floor(r.x0 / C); cx <= Math.floor(r.x1 / C); cx++) {
+        for (let cz = Math.floor(r.z0 / C); cz <= Math.floor(r.z1 / C); cz++) {
+          const k = (cx + 1000) * 4000 + (cz + 1000);
+          let arr = this.obstacleCells.get(k);
+          if (!arr) this.obstacleCells.set(k, (arr = []));
+          arr.push(r);
+        }
+      }
+    };
+    for (const b of this.buildings) {
+      if (b.y > this.cfg.plinthHeight + 0.01) continue;
+      add({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, z0: b.z - b.d / 2, z1: b.z + b.d / 2 });
+    }
+    for (const f of this.fountains) add({ x0: f.x - f.r, x1: f.x + f.r, z0: f.z - f.r, z1: f.z + f.r });
+    for (const p of this.props) {
+      if (p.kind === 'container') add({ x0: p.x - 1.2, x1: p.x + 1.2, z0: p.z - 6 * p.scale, z1: p.z });
+    }
+  }
+
+  /** Занята ли точка зданием/фонтаном (для пешеходов без физики). */
+  blocked(x: number, z: number, r = 0.4): boolean {
+    if (x < -this.cfg.boundary || x > this.cfg.boundary || z < -this.cfg.boundary || z > this.cfg.waterZ - 0.6) return true;
+    const C = CityLayout.CELL;
+    const arr = this.obstacleCells.get((Math.floor(x / C) + 1000) * 4000 + (Math.floor(z / C) + 1000));
+    if (!arr) return false;
+    for (const b of arr) if (x > b.x0 - r && x < b.x1 + r && z > b.z0 - r && z < b.z1 + r) return true;
+    return false;
   }
 
   // ---------------------------------------------------------------- дороги

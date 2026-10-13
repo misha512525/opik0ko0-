@@ -11,6 +11,10 @@ import type { CameraRig } from '../player/CameraRig';
 import type { VehicleManager } from '../vehicles/VehicleManager';
 import type { Weapons } from '../combat/Weapons';
 import type { Effects } from '../fx/Particles';
+import type { TrafficLights } from '../world/TrafficLights';
+import type { Roads } from '../ai/Roads';
+import type { Traffic } from '../ai/Traffic';
+import type { Pedestrians } from '../ai/Pedestrians';
 
 /**
  * Реестр сервисов игры. Это не «god-объект»: логики здесь нет, только ссылки,
@@ -32,4 +36,8 @@ export interface GameContext {
   vehicles: VehicleManager;
   weapons: Weapons;
   effects: Effects;
+  lights: TrafficLights;
+  roads: Roads;
+  traffic: Traffic;
+  peds: Pedestrians;
 }
