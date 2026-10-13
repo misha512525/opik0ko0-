@@ -25,6 +25,7 @@ import type { Pickups } from '../economy/Pickups';
 import type { SaveSystem } from '../save/SaveSystem';
 import type { Hud } from '../ui/Hud';
 import type { Markers } from '../fx/Markers';
+import type { AudioSystem } from '../audio/AudioSystem';
 
 /**
  * Реестр сервисов игры. Это не «god-объект»: логики здесь нет, только ссылки,
@@ -60,4 +61,5 @@ export interface GameContext {
   save: SaveSystem;
   hud: Hud;
   markers: Markers;
+  audio: AudioSystem;
 }

@@ -49,14 +49,14 @@ interface Key {
 
 // Ключевые кадры суток: цвет неба, горизонта, солнца и яркость.
 const KEYS: Key[] = [
-  { h: 0, top: 0x050a1a, hor: 0x1a2440, sun: 0x9fb0e0, sunI: 0.45, amb: 0.55 },
-  { h: 5, top: 0x070c20, hor: 0x222c4c, sun: 0x9fb0e0, sunI: 0.4, amb: 0.55 },
+  { h: 0, top: 0x050a1a, hor: 0x1a2440, sun: 0x9fb0e0, sunI: 0.45, amb: 0.7 },
+  { h: 5, top: 0x070c20, hor: 0x222c4c, sun: 0x9fb0e0, sunI: 0.4, amb: 0.7 },
   { h: 6.3, top: 0x2b3d6b, hor: 0xf09a64, sun: 0xffb27a, sunI: 0.9, amb: 0.4 },
   { h: 8, top: 0x3c76c4, hor: 0xb9d4ea, sun: 0xfff1d6, sunI: 2.2, amb: 0.75 },
   { h: 16, top: 0x3a72c0, hor: 0xbcd6ec, sun: 0xfff1d6, sunI: 2.3, amb: 0.75 },
   { h: 18.2, top: 0x2f3f70, hor: 0xf2884a, sun: 0xff9a5a, sunI: 1.1, amb: 0.45 },
-  { h: 19.6, top: 0x0c1430, hor: 0x3b2d4c, sun: 0x9fb0e0, sunI: 0.45, amb: 0.55 },
-  { h: 24, top: 0x050a1a, hor: 0x1a2440, sun: 0x9fb0e0, sunI: 0.45, amb: 0.55 },
+  { h: 19.6, top: 0x0c1430, hor: 0x3b2d4c, sun: 0x9fb0e0, sunI: 0.45, amb: 0.7 },
+  { h: 24, top: 0x050a1a, hor: 0x1a2440, sun: 0x9fb0e0, sunI: 0.45, amb: 0.7 },
 ];
 
 /**

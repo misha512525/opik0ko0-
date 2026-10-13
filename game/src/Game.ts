@@ -29,6 +29,7 @@ import { MissionManager } from './missions/MissionManager';
 import { SaveSystem } from './save/SaveSystem';
 import { Hud } from './ui/Hud';
 import { Menu } from './ui/Menu';
+import { AudioSystem } from './audio/AudioSystem';
 
 type FlowState = 'menu' | 'playing' | 'paused' | 'shop' | 'map';
 
@@ -51,6 +52,9 @@ export class Game {
   frameCount = 0;
   private fixedAccumMs = 0;
   private menuOrbit = 0;
+  /** Средняя стоимость одного шага физики+ИИ и логики кадра (без рендера), мс. */
+  stepMs = 0;
+  frameLogicMs = 0;
 
   private constructor(ctx: GameContext) {
     this.ctx = ctx;
@@ -79,6 +83,11 @@ export class Game {
     this.loop.paused = true;
     ctx.hud.setVisible(false);
     ctx.shops.onClose = () => this.setState('playing');
+    this.onStateChanged = (s) => ctx.audio.setPaused(s !== 'playing');
+    // Браузер разрешает звук только после жеста пользователя.
+    const unlock = () => ctx.audio.resume();
+    window.addEventListener('pointerdown', unlock);
+    window.addEventListener('keydown', unlock);
 
     document.addEventListener('pointerlockchange', () => {
       // Esc в браузере сначала снимает захват мыши — считаем это паузой.
@@ -149,6 +158,7 @@ export class Game {
     ctx.pickups = new Pickups(ctx);
     ctx.save = new SaveSystem(ctx);
     ctx.hud = new Hud(ctx);
+    ctx.audio = new AudioSystem(ctx);
     ctx.markers.addProvider(() => ctx.missions.markers());
     ctx.markers.addProvider(() => ctx.shops.markers());
 
@@ -234,7 +244,9 @@ export class Game {
   private fixedUpdate(dt: number): void {
     const t0 = performance.now();
     this.fixedStep(dt);
-    this.fixedAccumMs += performance.now() - t0;
+    const ms = performance.now() - t0;
+    this.fixedAccumMs += ms;
+    this.stepMs += (ms - this.stepMs) * 0.02;
   }
 
   private fixedStep(dt: number): void {
@@ -259,6 +271,7 @@ export class Game {
     this.ctx.renderer.render(this.ctx.scene, this.ctx.camera);
     const t2 = performance.now();
     this.cpuMs += (t1 - t0 + this.fixedAccumMs - this.cpuMs) * 0.05;
+    this.frameLogicMs += (t1 - t0 - this.frameLogicMs) * 0.05;
     this.renderMs += (t2 - t1 - this.renderMs) * 0.05;
     this.fixedAccumMs = 0;
     this.ctx.input.endFrame();
@@ -268,6 +281,8 @@ export class Game {
     const c = this.ctx;
     return {
       cpuMs: +this.cpuMs.toFixed(2),
+      stepMs: +this.stepMs.toFixed(2),
+      frameLogicMs: +this.frameLogicMs.toFixed(2),
       renderSubmitMs: +this.renderMs.toFixed(2),
       vehicles: c.vehicles.list.length,
       traffic: c.traffic.agents.length,
@@ -292,6 +307,7 @@ export class Game {
       c.camera.lookAt(p.x, 10, p.z);
       c.dayNight.update(1 / 60, p, c.camera);
       c.lights.update(1 / 60);
+      c.audio.update(0);
       return;
     }
     c.lights.update(dt);
@@ -303,15 +319,18 @@ export class Game {
     c.player.update(dt, alpha);
     c.cameraRig.update(dt);
     if (this.state === 'playing') {
+      if (c.player.mode === 'vehicle' && c.input.pressed('KeyR')) c.audio.cycleRadio();
       c.weapons.update(dt);
       c.shops.update();
       c.missions.update(dt);
       c.pickups.update(dt);
     }
     c.effects.update(dt);
+    c.effects.ambient(dt, c.player.renderPosition, c.visuals.fountainSprays);
     c.markers.update(dt);
     c.dayNight.update(dt, c.player.renderPosition, c.camera);
     c.hud.update(dt);
+    c.audio.update(dt);
     if (this.debugEl && c.settings.data.showFps) {
       const info = c.renderer.info;
       this.debugEl.textContent = `${this.loop.fps.toFixed(0)} FPS · CPU ${this.cpuMs.toFixed(1)} мс · ${info.render.calls} dc · ${(info.render.triangles / 1000).toFixed(0)}k tri`;

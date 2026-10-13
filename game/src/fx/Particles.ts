@@ -258,6 +258,19 @@ export class Effects {
     });
   }
 
+  private sprayTimer = 0;
+
+  /** Фоновые эффекты: струи фонтанов рядом с игроком. */
+  ambient(dt: number, focus: THREE.Vector3, sprays: THREE.Vector3[]): void {
+    this.sprayTimer -= dt;
+    if (this.sprayTimer > 0) return;
+    this.sprayTimer = 0.04;
+    for (const s of sprays) {
+      if (s.distanceTo(focus) > 140) continue;
+      for (let i = 0; i < 3; i++) this.splash(s);
+    }
+  }
+
   update(dt: number): void {
     this.smoke.update(dt);
     this.glow.update(dt);

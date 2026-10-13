@@ -28,7 +28,10 @@ node scripts/smoke.mjs http://localhost:4180/ walk      # ходьба, день
 node scripts/smoke.mjs http://localhost:4180/ drive     # вождение, занос, взрыв
 node scripts/smoke.mjs http://localhost:4180/ traffic   # трафик, пешеходы, наезд
 node scripts/smoke.mjs http://localhost:4180/ combat    # стрельба, розыск, полиция, смерть
-node scripts/smoke.mjs http://localhost:4180/ missions  # миссии, магазины, карта, пауза, сохранения
+node scripts/smoke.mjs http://localhost:4180/ missions  # миссии 1–3, магазины, карта, пауза, сохранения
+node scripts/smoke.mjs http://localhost:4180/ finale    # миссии 4–5: угон, уход от полиции, бой с боссом
+node scripts/smoke.mjs http://localhost:4180/ audio     # радио, переключение станций, звуки событий, фары
+node scripts/smoke.mjs "http://localhost:4180/?quality=medium" perf  # замер draw calls / треугольников / CPU
 ```
 
 Скрипт открывает игру в Chromium (`CHROMIUM_PATH` — путь к браузеру), выполняет

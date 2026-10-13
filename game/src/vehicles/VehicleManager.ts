@@ -16,8 +16,15 @@ export class VehicleManager {
   playerVehicle: Vehicle | null = null;
   private time = 0;
   private tmp = new THREE.Vector3();
+  /** Фары машины игрока (ночью). */
+  private headlight: THREE.SpotLight;
 
   constructor(private readonly ctx: GameContext) {
+    this.headlight = new THREE.SpotLight(0xfff1d6, 0, 60, 0.55, 0.45, 1.6);
+    ctx.scene.add(this.headlight, this.headlight.target);
+    ctx.events.on('vehicleImpact', ({ vehicle, strength }) => {
+      if (vehicle === this.playerVehicle) ctx.cameraRig.addShake(Math.min(0.8, strength / 18));
+    });
     ctx.events.on('explosion', ({ position, radius, source }) => this.onExplosion(position, radius, source as Vehicle | undefined));
   }
 
@@ -200,6 +207,15 @@ export class VehicleManager {
       if (v.sirenOn) sirens = true;
     }
     updateSirens(this.time, sirens);
-    setVehicleNight(this.ctx.dayNight.night);
+    const night = this.ctx.dayNight.night;
+    setVehicleNight(night);
+    const pv = this.playerVehicle;
+    if (pv && !pv.destroyed && night > 0.2) {
+      const s = Math.sin(pv.renderYaw), c = Math.cos(pv.renderYaw);
+      const rp = pv.renderPosition;
+      this.headlight.position.set(rp.x + s * pv.spec.half.z, rp.y + 0.3, rp.z + c * pv.spec.half.z);
+      this.headlight.target.position.set(rp.x + s * 25, 0, rp.z + c * 25);
+      this.headlight.intensity = night * 260;
+    } else this.headlight.intensity = 0;
   }
 }
