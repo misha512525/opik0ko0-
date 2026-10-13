@@ -13,6 +13,7 @@ import { Player } from './player/Player';
 import { CameraRig } from './player/CameraRig';
 import { VehicleManager } from './vehicles/VehicleManager';
 import { Weapons } from './combat/Weapons';
+import { Effects } from './fx/Particles';
 
 /**
  * Корень композиции: создаёт системы, связывает их через GameContext
@@ -24,6 +25,9 @@ export class Game {
   private debugEl: HTMLElement | null;
   /** Сглаженное время логики (без рендера) и рендера, мс — для профилирования. */
   cpuMs = 0;
+  /** Накопленное игровое время (с) и число кадров — для автотестов. */
+  simTime = 0;
+  frameCount = 0;
   renderMs = 0;
   private fixedAccumMs = 0;
 
@@ -77,8 +81,12 @@ export class Game {
       dayNight,
     } as Partial<GameContext> as GameContext;
 
+    ctx.effects = new Effects(scene);
+    ctx.effects.resize(window.innerHeight);
     ctx.weapons = new Weapons(ctx);
-    ctx.vehicles = new VehicleManager();
+    ctx.vehicles = new VehicleManager(ctx);
+    onProgress('Машины…');
+    ctx.vehicles.spawnParked();
     ctx.cameraRig = new CameraRig(ctx, camera);
     const home = city.poi('safehouse');
     ctx.player = new Player(ctx, new THREE.Vector3(home.x, 0.2, home.z));
@@ -116,12 +124,16 @@ export class Game {
 
   private fixedStep(dt: number): void {
     const c = this.ctx;
+    this.simTime += dt;
     c.player.fixedUpdate(dt);
+    c.vehicles.fixedUpdate(dt);
     c.physics.step();
+    c.vehicles.postStep(dt);
   }
 
   private update(dt: number, alpha: number): void {
     const t0 = performance.now();
+    this.frameCount++;
     this.frame(dt, alpha);
     const t1 = performance.now();
     this.ctx.renderer.render(this.ctx.scene, this.ctx.camera);
@@ -138,8 +150,10 @@ export class Game {
 
   private frame(dt: number, alpha: number): void {
     const c = this.ctx;
+    c.vehicles.update(dt, alpha);
     c.player.update(dt, alpha);
     c.cameraRig.update(dt);
+    c.effects.update(dt);
     c.dayNight.update(dt, c.player.renderPosition, c.camera);
     if (this.debugEl && c.settings.data.showFps) {
       const info = c.renderer.info;
@@ -152,5 +166,6 @@ export class Game {
     c.camera.aspect = window.innerWidth / window.innerHeight;
     c.camera.updateProjectionMatrix();
     c.renderer.setSize(window.innerWidth, window.innerHeight);
+    c.effects.resize(window.innerHeight);
   }
 }

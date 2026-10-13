@@ -1,13 +1,16 @@
 import type { Vector3 } from 'three';
+import type { Vehicle } from '../vehicles/Vehicle';
 
 /** Типизированная шина событий: системы общаются без прямых зависимостей. */
 export interface GameEvents {
   notify: { text: string; seconds?: number };
   crime: { kind: CrimeKind; position: Vector3 };
   gunshot: { position: Vector3; byPlayer: boolean };
-  explosion: { position: Vector3; radius: number };
+  explosion: { position: Vector3; radius: number; byPlayer: boolean; source?: unknown };
+  vehicleImpact: { vehicle: Vehicle; strength: number };
+  driverEjected: { vehicle: Vehicle; position: Vector3 };
   pedKilled: { position: Vector3; role: string; byPlayer: boolean };
-  vehicleDestroyed: { position: Vector3; police: boolean; byPlayer: boolean };
+  vehicleDestroyed: { position: Vector3; police: boolean; byPlayer: boolean; vehicle: Vehicle };
   playerDied: Record<string, never>;
   playerArrested: Record<string, never>;
   playerRespawned: { reason: 'death' | 'arrest' | 'load' };

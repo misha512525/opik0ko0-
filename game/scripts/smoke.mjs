@@ -29,10 +29,23 @@ await page.waitForFunction(() => window.__game !== undefined, null, { timeout: 1
 await page.waitForTimeout(1500);
 
 const g = (fn, arg) => page.evaluate(fn, arg);
+// Ожидание по игровому времени: в софтверном рендере кадры бывают очень долгими.
+const waitSim = async (sec) => {
+  const t0 = await g(() => window.__game.simTime);
+  await page.waitForFunction((t) => window.__game.simTime >= t, t0 + sec, { timeout: 180000, polling: 50 });
+};
+const waitFrames = async (n) => {
+  const f0 = await g(() => window.__game.frameCount);
+  await page.waitForFunction((f) => window.__game.frameCount >= f, f0 + n, { timeout: 180000, polling: 50 });
+};
+const down = (code) => g((c) => window.__game.ctx.input.simulate(c, true), code);
+const up = (code) => g((c) => window.__game.ctx.input.simulate(c, false), code);
+/** Удерживать клавишу sec игровых секунд (минимум 2 кадра). */
 const hold = async (code, ms) => {
-  await g((c) => window.__game.ctx.input.simulate(c, true), code);
-  await page.waitForTimeout(ms);
-  await g((c) => window.__game.ctx.input.simulate(c, false), code);
+  await down(code);
+  await waitFrames(2);
+  if (ms > 100) await waitSim(ms / 1000);
+  await up(code);
 };
 const shot = async (name) => {
   await page.screenshot({ path: `${outDir}/${scenario}-${name}.png` });
@@ -67,10 +80,9 @@ if (scenario === 'walk' || scenario === 'full') {
   const before = await stats('before-walk');
   await hold('KeyW', 2500);
   await g(() => { window.__game.ctx.cameraRig.yaw += 1.2; });
-  await hold('ShiftLeft', 10).catch(() => {});
-  await g((c) => window.__game.ctx.input.simulate(c, true), 'ShiftLeft');
+  await down('ShiftLeft');
   await hold('KeyW', 2000);
-  await g((c) => window.__game.ctx.input.simulate(c, false), 'ShiftLeft');
+  await up('ShiftLeft');
   await hold('Space', 100);
   await page.waitForTimeout(300);
   const after = await stats('after-walk');
@@ -79,12 +91,10 @@ if (scenario === 'walk' || scenario === 'full') {
   if (moved < 3) errors.push('[test] player did not move');
   await shot('01-walk');
   await g(() => { const c = window.__game.ctx; c.dayNight.hour = 22.5; });
-  await page.waitForTimeout(800);
+  await waitFrames(3);
   await shot('02-night');
-  await g(() => { const c = window.__game.ctx; c.dayNight.hour = 12; });
-  await page.waitForTimeout(600);
-  await g(() => { const c = window.__game.ctx; c.cameraRig.pitch = 0.5; });
-  await page.waitForTimeout(400);
+  await g(() => { const c = window.__game.ctx; c.dayNight.hour = 12; c.cameraRig.pitch = 0.5; });
+  await waitFrames(3);
   await shot('03-day-skyline');
 }
 
@@ -92,7 +102,7 @@ if (typeof globalThis.__extraScenario === 'function') await globalThis.__extraSc
 const extraPath = `scripts/scenario-${scenario}.mjs`;
 if (fs.existsSync(extraPath)) {
   const mod = await import(`./scenario-${scenario}.mjs`);
-  await mod.default({ page, g, hold, shot, stats, errors });
+  await mod.default({ page, g, hold, shot, stats, errors, waitSim, waitFrames, down, up });
 }
 
 await stats('end');

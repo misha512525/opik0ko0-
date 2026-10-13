@@ -1,0 +1,51 @@
+// Сценарий: подойти к машине, сесть (F), разогнаться, ручник, повредить, взорвать.
+export default async function ({ g, hold, shot, stats, errors, waitSim, waitFrames, down, up }) {
+  await g(() => {
+    const c = window.__game.ctx;
+    const lane = c.city.nearestLane(c.player.position.x, c.player.position.z);
+    const yaw = [Math.PI, Math.PI / 2, 0, -Math.PI / 2][lane.dir];
+    const v = c.vehicles.spawn('sports', lane.x, lane.z, yaw);
+    window.__testCar = v;
+    c.player.teleport({ x: lane.x + 3, y: 0.2, z: lane.z });
+  });
+  await waitFrames(3);
+  await hold('KeyF', 0);
+  await waitFrames(2);
+  const s1 = await stats('in-car');
+  if (s1.mode !== 'vehicle') errors.push('[test] player did not enter vehicle');
+  await down('KeyW');
+  await waitSim(3);
+  const sp = await g(() => window.__testCar.forwardSpeed);
+  console.log('speed after 3s throttle', sp.toFixed(1), 'm/s');
+  if (sp < 15) errors.push('[test] car did not accelerate');
+  await shot('01-driving');
+  await down('KeyD');
+  await down('Space');
+  await waitSim(0.6);
+  const lat = await g(() => window.__testCar.lateralSpeed);
+  console.log('lateral speed with handbrake', lat.toFixed(1));
+  if (Math.abs(lat) < 1) errors.push('[test] no drift with handbrake');
+  await shot('02-drift');
+  await up('Space');
+  await up('KeyD');
+  await up('KeyW');
+  await hold('KeyS', 2500);
+  await waitSim(1);
+  console.log('speed before exit', (await g(() => window.__testCar.forwardSpeed)).toFixed(1));
+  await hold('KeyF', 0);
+  await waitFrames(2);
+  const s2 = await stats('exited');
+  if (s2.mode !== 'foot') errors.push('[test] player did not exit vehicle');
+  await g(() => { const c = window.__game.ctx; const v = window.__testCar; v.health = v.maxHealth * 0.3; c.cameraRig.yaw = v.yaw + 2.5; });
+  await waitSim(1);
+  await shot('03-smoke');
+  await g(() => { const v = window.__testCar; v.health = 0; });
+  await waitSim(2);
+  await shot('04-fire');
+  await waitSim(3.5);
+  const destroyed = await g(() => window.__testCar.destroyed);
+  console.log('car destroyed', destroyed);
+  if (!destroyed) errors.push('[test] car did not explode');
+  await waitFrames(2);
+  await shot('05-wreck');
+}
