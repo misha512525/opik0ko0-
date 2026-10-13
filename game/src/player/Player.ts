@@ -161,10 +161,12 @@ export class Player {
     this.position.x += mv.x;
     this.position.y += mv.y;
     this.position.z += mv.z;
-    // Страховка от проваливания.
-    if (this.position.y < -5) {
-      this.position.y = 2;
-      this.velocity.y = 0;
+    // Мир плоский: ниже уровня земли капсула оказаться не может (контроллер не
+    // выталкивает из пересечений, когда рядом толкаются машины).
+    if (this.position.y < this.capsuleOffset) {
+      this.position.y = this.capsuleOffset;
+      if (this.velocity.y < 0) this.velocity.y = 0;
+      this.grounded = true;
     }
     this.body.setNextKinematicTranslation({ x: this.position.x, y: this.position.y, z: this.position.z });
 
