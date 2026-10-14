@@ -27,14 +27,15 @@
     F.draw(ctx, t1.short, x + 25 + sw, y + 2, COL.text);
     // время
     let secs;
-    if (m.mode === 'match') {
+    if (m.timed) {
       const half = m.half === 1 ? 0 : C.GAME_HALF_SEC;
       secs = Math.min(m.clock, half + C.GAME_HALF_SEC);
     } else secs = -1;
     const s = Math.floor(secs);
-    if (s !== clockSec) { clockSec = s; clockStr = secs < 0 ? '--:--' : U.fmtTime(secs); }
+    if (secs < 0) clockStr = m.duelTarget ? 'ДО ' + m.duelTarget : '--:--';
+    else if (s !== clockSec) { clockSec = s; clockStr = U.fmtTime(secs); }
     F.draw(ctx, clockStr, x + 67 + ex, y + 2, COL.accent);
-    if (m.addedShown && m.mode === 'match') {
+    if (m.addedShown && m.timed) {
       box(ctx, x + 104 + ex, y, 14, 11, COL.accent);
       F.draw(ctx, '+' + m.addedMin, x + 111 + ex, y + 2, '#0e1424', 1, 1);
     }
@@ -64,6 +65,8 @@
   }
 
   function playerInfo(ctx, m) {
+    const hs = m.humans;
+    if (hs.length > 1) { infoBox(ctx, hs[0].controlled, 4, 0, '1'); infoBox(ctx, hs[1].controlled, C.W - 4, 2, '2'); return; }
     const h = m.human;
     const b = m.ball;
     const p = h && h.controlled ? h.controlled : b.owner;
@@ -86,6 +89,19 @@
       ctx.fillStyle = o.team.kit.p; ctx.fillRect(C.W - ww - 4, y, 2, 9);
       F.draw(ctx, s, C.W - ww, y + 1, COL.dim);
     }
+  }
+
+  // Карточка игрока при игре вдвоём (align 0 — слева, 2 — справа)
+  function infoBox(ctx, p, ax, align, label) {
+    if (!p) return;
+    const y = C.H - 26, name = label + '· ' + p.num + ' ' + p.name;
+    const w = Math.max(52, F.width(name) + 8), x = align ? ax - w : ax;
+    box(ctx, x, y, w, 13, '#0e1424');
+    ctx.fillStyle = p.team.kit.p; ctx.fillRect(x, y, 2, 13);
+    F.draw(ctx, name, x + 5, y + 1, label === '1' ? COL.accent2 : '#40e0e0');
+    ctx.fillStyle = '#2a3150'; ctx.fillRect(x + 5, y + 10, w - 9, 2);
+    ctx.fillStyle = p.stamina > 0.5 ? COL.accent : p.stamina > 0.25 ? COL.accent2 : COL.red;
+    ctx.fillRect(x + 5, y + 10, Math.round((w - 9) * p.stamina), 2);
   }
 
   function ticker(ctx) {

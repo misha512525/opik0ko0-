@@ -17,6 +17,8 @@
       this.diff = C.DIFF[o.diff == null ? 1 : o.diff];
       this.diffHumanMates = C.DIFF[1];
       this.offsideOn = o.offside !== false && this.mode === 'match';
+      this.duelTarget = this.mode === 'duel' ? (o.duelTarget || 0) : 0;
+      this.timed = this.mode === 'match' || (this.mode === 'duel' && !this.duelTarget); // идут ли часы
       this.cardsOn = o.cards !== false;
       this.halfMin = o.halfMin || 3;
       this.clockRate = C.GAME_HALF_SEC / (this.halfMin * 60);
@@ -28,9 +30,12 @@
       if (U.colorDist(this.radarCol[0], this.radarCol[1]) < 90) this.radarCol[1] = '#ffffff';
       this.ball = new Ball();
       this.teams = [
-        this.makeTeam(0, o.home, kits[0], kits[2], o.homeLineup, o.homeFormation, o.homeTactics, o.human === 0),
-        this.makeTeam(1, o.away, kits[1], kits[3], o.awayLineup, o.awayFormation, o.awayTactics, o.human === 1),
+        this.makeTeam(0, o.home, kits[0], kits[2], o.homeLineup, o.homeFormation, o.homeTactics, o.human === 0 || o.human === 'both'),
+        this.makeTeam(1, o.away, kits[1], kits[3], o.awayLineup, o.awayFormation, o.awayTactics, o.human === 1 || o.human === 'both'),
       ];
+      // номер набора ввода: первая команда человека — игрок 1, вторая — игрок 2
+      let pad = 0;
+      for (const t of this.teams) t.pad = t.human ? pad++ : 0;
       this.teams[0].dir = 1; this.teams[1].dir = -1;
       // судья
       const refTeam = { dir: 1, human: false, idx: -1, players: [] };
@@ -57,6 +62,7 @@
       Comm.reset();
       PF.FX.clear();
       PF.Pitch.build(kits[0], kits[1], !!o.night);
+      if (this.mode === 'duel') this.setupDuel();
       this.placeKickoff(this.kickoffFirst);
       if (this.mode === 'training' || this.mode === 'freekick') {
         this.setupTraining();
@@ -100,6 +106,7 @@
       this.replayEnts = this.all.concat([this.ref]);
     }
     get human() { return this.teams.find((t) => t.human) || null; }
+    get humans() { return this.teams.filter((t) => t.human); }
 
     // ---------- Геометрия ----------
     inBox(x, y, team, margin) {
@@ -272,8 +279,15 @@
     }
 
     humanControl(dt) {
-      const t = this.human;
-      if (!t || this.state !== 'play') return;
+      if (this.state !== 'play') return;
+      for (const t of this.teams) {
+        if (!t.human) continue;
+        PF.Input.use(t.pad);
+        this.humanControlTeam(t, dt);
+      }
+      PF.Input.use(0);
+    }
+    humanControlTeam(t, dt) {
       const I = PF.Input, b = this.ball;
       let p = t.controlled;
       if (!p || p.off) { this.setControlled(t, this.switchCandidate(t, 0, 0)); p = t.controlled; if (!p) return; }
@@ -437,7 +451,7 @@
 
     updPlay(dt) {
       const b = this.ball;
-      if (this.mode === 'match' && !this.so) {
+      if (this.timed && !this.so) {
         this.clock += dt * this.clockRate;
         this.checkTime();
       }
@@ -580,7 +594,7 @@
       b.owner = p; b.held = false; b.lastTouch = p; b.spin = 0;
       p.holdT = 0; p.aiT = Math.min(p.aiT, 0.1);
       this.possTeam = t.idx;
-      if (t.human) { this.setControlled(t, p); this.runBuffer(p); }
+      if (t.human) { this.setControlled(t, p); PF.Input.use(t.pad); this.runBuffer(p); PF.Input.use(0); }
     }
 
     gkCatch(p) {
@@ -611,7 +625,9 @@
       if (b.speed() > 26 && Math.random() < 0.5) { b.vx *= 0.5; b.vy *= 0.5; b.vz = Math.abs(b.vz) * 0.4; b.lastTouch = p; p.kickCD = 0.3; return; }
       // человек с буфером
       if (p.controlled && p.buffer) {
-        const a = PF.Input.axis(); const act = p.buffer; p.buffer = null;
+        PF.Input.use(t.pad);
+        const a = { x: PF.Input.axis().x, y: PF.Input.axis().y }; const act = p.buffer; p.buffer = null;
+        PF.Input.use(0);
         if (act === 'shoot') {
           const aimY = a.y < -0.35 ? Ball.Y1 + 0.6 : a.y > 0.35 ? Ball.Y2 - 0.6 : MY + U.gauss() * 2;
           p.header(gx - p.x, aimY - p.y, 13 + p.s.phy / 12, -0.5 + Math.random(), 'shot');
@@ -766,6 +782,20 @@
         if ((b.x > L + r) && b.y > Ball.Y1 && b.y < Ball.Y2 && b.z < C.GOAL_H) this.scoreGoal(1);
         return;
       }
+      if (this.mode === 'duel') {
+        // в дуэли нет аутов и угловых: мяч переходит сопернику того, кто коснулся последним
+        const lastT = b.lastTouch ? b.lastTouch.team : null;
+        if (b.x < -r || b.x > L + r) {
+          const side = b.x < 0 ? 0 : 1;
+          if (b.y > Ball.Y1 && b.y < Ball.Y2 && b.z < C.GOAL_H) { this.scoreGoal(side); return; }
+          const def = this.teams.find((t) => (t.dir > 0 ? 0 : 1) === side);
+          if (lastT === def) this.stop({ type: 'duel', team: 1 - def.idx, x: side ? L - 4 : 4, y: b.y < MY ? 5 : W - 5 }, true);
+          else this.stop({ type: 'duel', team: def.idx, gk: true, x: 0, y: MY }, true);
+        } else if (b.y < -r || b.y > W + r) {
+          this.stop({ type: 'duel', team: lastT ? 1 - lastT.idx : 0, x: U.clamp(b.x, 4, L - 4), y: b.y < 0 ? 3 : W - 3 }, true);
+        }
+        return;
+      }
       if (this.mode === 'training' || this.mode === 'freekick') {
         // в тренировке ауты не нужны — только голы
         if (b.x < -r || b.x > L + r) {
@@ -820,7 +850,7 @@
       }
       this.moveRef(dt);
       this.cam.x = b.x; this.cam.y = b.y; this.cam.z = 0;
-      if (this.stateT > C.STOP_DELAY) this.beginSetPiece(this.pending);
+      if (this.stateT > C.STOP_DELAY) { if (this.pending.type === 'duel') this.duelRestart(this.pending); else this.beginSetPiece(this.pending); }
     }
 
     showBanner(text, sub, dur, col) { this.banner = { text, sub, t: 0, dur: dur || 1.6, col: col || C.COL.accent2 }; }
@@ -862,6 +892,9 @@
         this.showBanner('ПЕНАЛЬТИ!', null, 2, C.COL.red);
         PF.Audio.crowdExcite(0.8);
         this.stop({ type: 'penalty', team: vt.idx, x: vt.dir > 0 ? L - C.PEN_SPOT : C.PEN_SPOT, y: MY });
+      } else if (this.mode === 'duel') {
+        if (!card) this.showBanner('ФОЛ', off.name, 1.3);
+        this.stop({ type: 'duel', team: vt.idx, x: U.clamp(vic.x, 4, L - 4), y: U.clamp(vic.y, 3, W - 3) });
       } else {
         if (!card) this.showBanner('ФОЛ', off.name, 1.3);
         if (Math.random() < 0.5) Comm.say('freekick', { team: vt.short });
@@ -927,7 +960,7 @@
       this.lastShot = null; this.lastPass = null;
       const min = this.displayMinute();
       const isPen = this.spLastType === 'penalty' && b.kickT < 3;
-      if (this.mode === 'match') this.goals.push({ team: scorerTeam.idx, name: scorer ? scorer.name : (last ? last.name : '?'), id: scorer ? scorer.def.id : null, own, min, pen: isPen });
+      if (this.mode === 'match' || this.mode === 'duel') this.goals.push({ team: scorerTeam.idx, name: scorer ? scorer.name : (last ? last.name : '?'), id: scorer ? scorer.def.id : null, own, min, pen: isPen });
       this.stoppage += C.STOPPAGE_GOAL;
       snd('goal'); snd('net');
       PF.Audio.crowdExcite(1);
@@ -966,7 +999,7 @@
       this.cam.rate = 3;
       if (this.stateT > C.GOAL_CELEB_TIME) {
         this.cam.zoom = 1;
-        if (this.mode === 'match' && this.replay.play(C.REPLAY_SEC, C.GOAL_CELEB_TIME - 1.2)) {
+        if ((this.mode === 'match' || this.mode === 'duel') && this.replay.play(C.REPLAY_SEC, C.GOAL_CELEB_TIME - 1.2)) {
           this.setState('replay');
           for (const p of this.replayEnts) p.rvis = true;
         } else this.afterGoal();
@@ -979,6 +1012,16 @@
     }
     afterGoal() {
       if (this.mode === 'training' || this.mode === 'freekick') { this.trainingReset(0); return; }
+      // дуэль до N голов: победитель определён
+      if (this.mode === 'duel' && this.duelTarget && this.goalInfo.team.score >= this.duelTarget) {
+        const w = this.goalInfo.team;
+        this.goalInfo = null;
+        snd('whistle', 3);
+        this.setState('fulltime');
+        this.showBanner('ПОБЕДА: ' + w.short, w.score + ':' + this.teams[1 - w.idx].score, 3);
+        Comm.say('fulltime', { score: this.teams[0].score + ':' + this.teams[1].score }, 2);
+        return;
+      }
       const conc = 1 - this.goalInfo.team.idx;
       this.goalInfo = null;
       this.placeKickoff(conc);
@@ -1100,8 +1143,11 @@
       const aim = this.spDefaultAim(this.sp);
       this.sp.aimX = aim.x; this.sp.aimY = aim.y;
       if (t.human) this.setControlled(t, taker);
-      const h = this.human;
-      if (h && h !== t) { const c = h.players.find((p) => !p.off && p.role === 'FWD') || h.players[1]; this.setControlled(h, c); }
+      for (const h of this.humans) {
+        if (h === t) continue;
+        const c = h.players.find((p) => !p.off && p.role === 'FWD') || h.players.find((p) => !p.off && !p.isGK);
+        this.setControlled(h, c);
+      }
       this.ref.place(L / 2 - 6, MY + 12);
       this.setState(this.state === 'intro' ? 'intro' : 'kickoff');
       this.cam.x = L / 2; this.cam.y = MY;
@@ -1144,10 +1190,10 @@
       this.sp = sp;
       this.spLastType = sp.type;
       if (t.human) this.setControlled(t, taker);
-      const h = this.human;
-      if (h && h !== t) {
+      for (const h of this.humans) {
+        if (h === t) continue;
         if (sp.type === 'penalty') this.setControlled(h, h.players.find((p) => p.isGK && !p.off));
-        else this.setControlled(h, this.switchCandidate(h, 0, 0));
+        else this.setControlled(h, this.switchCandidate(h, 0, 0) || h.controlled);
       }
       this.setState('setpiece');
       this.cam.x = sp.x; this.cam.y = sp.y;
@@ -1229,7 +1275,7 @@
     updSetPiece(dt) {
       const sp = this.sp, b = this.ball, t = this.teams[sp.team];
       sp.t += dt;
-      if (this.state === 'setpiece' && this.mode === 'match' && !this.so) this.clock += dt * this.clockRate * 0.5;
+      if (this.state === 'setpiece' && this.timed && !this.so) this.clock += dt * this.clockRate * 0.5;
       b.x = sp.x; b.y = sp.y; b.z = 0; b.vx = b.vy = b.vz = 0; b.owner = null;
       if (sp.type === 'throw') { b.z = 2.0; b.x = sp.taker.x; b.y = sp.y < MY ? 0.3 : W - 0.3; }
       if (sp.type === 'goalkick' && sp.taker.isGK) { /* мяч на земле */ }
@@ -1237,7 +1283,7 @@
         if (p.off) continue;
         if (p === sp.taker) { p.ix = p.iy = 0; p.faceX = sp.aimX; p.faceY = sp.aimY; p.update(dt); continue; }
         const h = p.team.human && p.controlled && this.state === 'setpiece' && sp.type !== 'penalty';
-        if (h) { const a = PF.Input.axis(); p.ix = a.x; p.iy = a.y; p.sprint = PF.Input.down('sprint'); p.faceX = b.x; p.faceY = b.y; }
+        if (h) { PF.Input.use(p.team.pad); const a = PF.Input.axis(); p.ix = a.x; p.iy = a.y; p.sprint = PF.Input.down('sprint'); PF.Input.use(0); p.faceX = b.x; p.faceY = b.y; }
         else if (this.state === 'kickoff') { p.ix = p.iy = 0; p.faceX = b.x; p.faceY = b.y; }
         else { AI.moveTo(p, p.spX, p.spY, Math.hypot(p.x - p.spX, p.y - p.spY) > 6, false); p.faceX = b.x; p.faceY = b.y; }
         p.update(dt);
@@ -1252,12 +1298,12 @@
       if (!ready) return;
       // человек долго не разыгрывает стандарт — за него решает ИИ (кроме пенальти)
       if (t.human && sp.t > 12 && sp.type !== 'penalty') this.spAI(sp);
-      else if (t.human) this.spHuman(sp, dt);
+      else if (t.human) { PF.Input.use(t.pad); this.spHuman(sp, dt); PF.Input.use(0); }
       else if (sp.t > (this.state === 'kickoff' ? 1.0 : C.SETPIECE_PREP + C.AI_SETPIECE_WAIT * (sp.type === 'throw' ? 0.5 : 1))) this.spAI(sp);
       // вратарь-человек на пенальти: выбирает сторону заранее
       if (sp.type === 'penalty') {
-        const h = this.human;
-        if (h && h.idx !== sp.team) { const a = PF.Input.axis(); sp.gkGuess = a.y < -0.4 ? -1 : a.y > 0.4 ? 1 : sp.gkGuess || 0; }
+        const h = this.teams[1 - sp.team];
+        if (h.human && this.state === 'setpiece') { PF.Input.use(h.pad); const a = PF.Input.axis(); sp.gkGuess = a.y < -0.4 ? -1 : a.y > 0.4 ? 1 : sp.gkGuess || 0; PF.Input.use(0); }
       }
     }
 
@@ -1429,6 +1475,45 @@
       this.soNext();
     }
 
+    // ---------- Дуэль 1 на 1 ----------
+    // На поле вратарь (слот 0) и один полевой (слот 10) с каждой стороны
+    setupDuel() {
+      for (const t of this.teams) for (const p of t.players) {
+        if (p.slot === 0 || p.slot === 10) continue;
+        p.off = true; p.benched = true; p.place(-6, -6);
+      }
+      this.refreshAll();
+      this.all = this.all.filter((p) => !p.off);
+    }
+    duelRestart(pd) {
+      const t = this.teams[pd.team], opp = this.teams[1 - pd.team], b = this.ball;
+      const gx = t.dir > 0 ? 0 : L;
+      b.reset(pd.x, pd.y);
+      for (const p of this.all) { p.setState('move'); p.vx = p.vy = 0; p.charging = false; p.chAct = null; p.buffer = null; }
+      let taker;
+      if (pd.gk) {
+        taker = t.players.find((p) => p.isGK && !p.off);
+        taker.place(gx + t.dir * 1.5, MY);
+        b.x = taker.x; b.y = taker.y;
+        this.gkCatch(taker);
+      } else {
+        taker = t.players.find((p) => !p.off && !p.isGK);
+        taker.place(pd.x - t.dir * 0.6, pd.y);
+        taker.facing = t.dir > 0 ? 0 : Math.PI;
+        b.owner = taker; b.lastTouch = taker;
+        if (t.human) this.setControlled(t, taker);
+      }
+      // соперник отходит на 7 м
+      for (const o of opp.players) {
+        if (o.off || o.isGK) continue;
+        const dx = o.x - b.x, dy = o.y - b.y, d = Math.hypot(dx, dy);
+        if (d < 7) { const k = 7 / (d || 1); o.place(U.clamp(b.x + (d ? dx * k : -t.dir * 7), 1, L - 1), U.clamp(b.y + dy * k, 1, W - 1)); }
+      }
+      this.possTeam = t.idx;
+      this.lastShot = null; this.lastPass = null;
+      this.setState('play');
+    }
+
     // ---------- Тренировка ----------
     setupTraining() {
       const opp = this.teams[1 - (this.o.human === 1 ? 1 : 0)];
@@ -1472,6 +1557,7 @@
         const resBonus = t.score > o.score ? 0.35 : t.score < o.score ? -0.3 : 0;
         const list = t.players.concat(t.subbedOut || []);
         for (const p of list) {
+          if (p.benched) continue; // в дуэли на поле только двое
           const s = p.st;
           let r = 6.0 + s.goals * 1.0 + s.assists * 0.7 + s.onT * 0.15 + s.shots * 0.04 + s.passOk * 0.025 - (s.passes - s.passOk) * 0.05
             + s.tackles * 0.12 + s.inter * 0.08 + s.saves * 0.35 - s.fouls * 0.1 - s.yellow * 0.3 - s.red * 1.6

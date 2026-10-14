@@ -63,8 +63,9 @@
         PF.Audio.crowdStart();
         this.fps = PF.Save.data.settings.fps;
         this.prevGoalState = false;
+        PF.Input.setTwoPlayer(this.m.humans.length > 1); // раскладки делятся между двумя игроками
       },
-      exit() { PF.Audio.crowdStop(); PF.Loop.timeScale = 1; },
+      exit() { PF.Audio.crowdStop(); PF.Loop.timeScale = 1; PF.Input.setTwoPlayer(false); },
       update(dt) {
         const m = this.m;
         if (this.pause) { this.pause.update(dt); return; }

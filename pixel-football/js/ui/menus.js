@@ -76,9 +76,10 @@
     { id: 'career', x: 198, y: 24, w: 178, h: 54, title: 'КАРЬЕРА', sub: 'СЕЗОН ТРЕНЕРА-МЕНЕДЖЕРА', col: '#1d3a8a' },
     { id: 'cup', x: 198, y: 82, w: 87, h: 54, title: 'ТУРНИР', sub: 'КУБОК 8/16', col: '#8a5a10' },
     { id: 'squad', x: 289, y: 82, w: 87, h: 54, title: 'ЗВЕЗДНЫЙ', sub: 'СОСТАВ', col: '#6a2a8a' },
-    { id: 'train', x: 8, y: 142, w: 120, h: 50, title: 'ТРЕНИРОВКА', sub: 'ИГРА И ШТРАФНЫЕ', col: '#2a6a6a' },
-    { id: 'settings', x: 132, y: 142, w: 120, h: 50, title: 'НАСТРОЙКИ', sub: 'ЗВУК, МАТЧ, ПРАВИЛА', col: '#3a4466' },
-    { id: 'controls', x: 256, y: 142, w: 120, h: 50, title: 'УПРАВЛЕНИЕ', sub: 'КЛАВИАТУРА И ГЕЙМПАД', col: '#5a3a3a' },
+    { id: 'train', x: 8, y: 142, w: 89, h: 50, title: 'ТРЕНИРОВКА', sub: 'ШТРАФНЫЕ', col: '#2a6a6a' },
+    { id: 'duel', x: 101, y: 142, w: 89, h: 50, title: '1 НА 1', sub: 'ДУЭЛЬ, ВДВОЕМ', col: '#8a2a3a' },
+    { id: 'settings', x: 194, y: 142, w: 89, h: 50, title: 'НАСТРОЙКИ', sub: 'ЗВУК, ПРАВИЛА', col: '#3a4466' },
+    { id: 'controls', x: 287, y: 142, w: 89, h: 50, title: 'УПРАВЛЕНИЕ', sub: 'КЛАВИШИ', col: '#5a3a3a' },
   ];
   function tileIcon(ctx, id, x, y, t) {
     const px = (cx, cy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + cx, y + cy, w, h); };
@@ -88,6 +89,7 @@
       case 'squad': { const b = ((t * 3) | 0) & 1; px(2, 0, 12, 16, b ? COL.gold : '#d0a020'); px(3, 1, 10, 14, '#2a1a40'); px(5, 3, 6, 5, '#f2c69a'); px(5, 3, 6, 2, '#2b1d14'); px(4, 9, 8, 5, '#ffd23c'); break; }
       case 'train': px(0, 12, 16, 2, '#fff'); for (let i = 0; i < 3; i++) px(2 + i * 5, 4, 2, 8, '#ff8020'); px(1, 2, 4, 2, '#ff8020'); break;
       case 'settings': px(4, 0, 8, 16, '#8a94b8'); px(0, 4, 16, 8, '#8a94b8'); px(5, 5, 6, 6, '#3a4466'); px(7, 7, 2, 2, '#8a94b8'); break;
+      case 'duel': px(0, 4, 4, 4, '#f2c69a'); px(0, 8, 4, 6, COL.red); px(12, 4, 4, 4, '#c98d5e'); px(12, 8, 4, 6, '#4fa3ff'); px(7, 11, 3, 3, '#ffffff'); break;
       case 'controls': px(0, 4, 16, 9, '#c0c8e0'); px(1, 5, 14, 7, '#2a3150'); px(3, 7, 4, 1, '#c0c8e0'); px(4, 6, 2, 3, '#c0c8e0'); px(10, 6, 2, 2, COL.red); px(12, 8, 2, 2, COL.accent); break;
       default: break;
     }
@@ -126,6 +128,7 @@
           else if (id === 'cup') App.go(PF.Modes.cup());
           else if (id === 'squad') App.go(PF.Modes.squad());
           else if (id === 'train') App.go(PF.Modes.training());
+          else if (id === 'duel') App.go(PF.Modes.duel());
         }
         if (I.pressed('back')) { PF.Audio.play('back'); App.go(M.title(), 'reset'); }
       },

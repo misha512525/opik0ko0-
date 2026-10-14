@@ -922,5 +922,87 @@
     };
   };
 
+  // =====================================================================
+  // 1 НА 1: дуэль одного полевого и вратаря с каждой стороны (против ИИ или друга)
+  // =====================================================================
+  Modes.duel = () => {
+    const S = SV();
+    const q = S.duel || (S.duel = { home: SV().quick.home, away: SV().quick.away, hp: 0, ap: 0, vs: 'ai', target: 3 });
+    const TARGETS = [3, 5, 0];
+    const tIdx = (id) => Math.max(0, D.TEAMS.findIndex((t) => t.id === id));
+    let hi = tIdx(q.home), ai = tIdx(q.away);
+    const field = (team) => team.squad.filter((p) => p.role !== 'GK').slice().sort((a, b) => b.ovr - a.ovr);
+    const cyc = (v, d, n) => (v + d + n) % n;
+    const save = () => { q.home = D.TEAMS[hi].id; q.away = D.TEAMS[ai].id; PF.Save.save(); };
+    const myP = () => field(D.TEAMS[hi])[q.hp % field(D.TEAMS[hi]).length];
+    const opP = () => field(D.TEAMS[ai])[q.ap % field(D.TEAMS[ai]).length];
+    const menu = new UI.ListMenu([
+      { label: 'ВАША КОМАНДА', value: () => D.TEAMS[hi].short, left: () => { hi = cyc(hi, -1, D.TEAMS.length); q.hp = 0; save(); }, right: () => { hi = cyc(hi, 1, D.TEAMS.length); q.hp = 0; save(); } },
+      { label: 'ВАШ ИГРОК', value: () => myP().name.slice(0, 9), left: () => { q.hp = cyc(q.hp, -1, field(D.TEAMS[hi]).length); save(); }, right: () => { q.hp = cyc(q.hp, 1, field(D.TEAMS[hi]).length); save(); } },
+      { label: 'СОПЕРНИК', value: () => (q.vs === 'ai' ? 'ИИ' : 'ДРУГ'), left: () => { q.vs = q.vs === 'ai' ? 'friend' : 'ai'; save(); }, right: () => { q.vs = q.vs === 'ai' ? 'friend' : 'ai'; save(); } },
+      { label: 'ЕГО КОМАНДА', value: () => D.TEAMS[ai].short, left: () => { ai = cyc(ai, -1, D.TEAMS.length); q.ap = 0; save(); }, right: () => { ai = cyc(ai, 1, D.TEAMS.length); q.ap = 0; save(); } },
+      { label: 'ЕГО ИГРОК', value: () => opP().name.slice(0, 9), left: () => { q.ap = cyc(q.ap, -1, field(D.TEAMS[ai]).length); save(); }, right: () => { q.ap = cyc(q.ap, 1, field(D.TEAMS[ai]).length); save(); } },
+      { label: 'ИГРА', value: () => (q.target ? 'ДО ' + q.target + ' ГОЛОВ' : 'ПО ВРЕМЕНИ'), left: () => { q.target = TARGETS[cyc(TARGETS.indexOf(q.target), -1, 3)]; save(); }, right: () => { q.target = TARGETS[cyc(TARGETS.indexOf(q.target), 1, 3)]; save(); } },
+      { label: 'СЛОЖНОСТЬ ИИ', value: () => C.DIFF[st().diff].name, left: () => { st().diff = (st().diff + 2) % 3; PF.Save.save(); }, right: () => { st().diff = (st().diff + 1) % 3; PF.Save.save(); } },
+      { label: 'НАЧАТЬ ДУЭЛЬ', action: () => start() },
+    ]);
+    menu.sel = 7;
+    // Состав для дуэли: вратарь в слоте 0, выбранный игрок в слоте 10, остальные — запас
+    function duelLineup(team, chosen) {
+      const ids = PF.Save.teamSetup(team).lineup.slice();
+      const gk = ids.find((id) => D.PLAYERS[id].role === 'GK') || ids[0];
+      const rest = ids.filter((id) => id !== gk && id !== chosen.id);
+      return [gk].concat(rest.slice(0, 9), [chosen.id], rest.slice(9));
+    }
+    function start() {
+      save();
+      const home = D.TEAMS[hi], away = D.TEAMS[ai];
+      const friend = q.vs === 'friend';
+      App.go(PF.MatchScreen({
+        home, away, human: friend ? 'both' : 0, mode: 'duel', duelTarget: q.target,
+        halfMin: q.target ? 3 : Math.min(st().halfMin, 3), diff: st().diff, offside: false, cards: st().cards, night: st().night,
+        homeLineup: duelLineup(home, myP()), awayLineup: duelLineup(away, opP()), homeFormation: '4-4-2', awayFormation: '4-4-2',
+      }, (res, m) => {
+        if (!friend) {
+          const reward = res.hs > res.as ? 200 : res.hs === res.as ? 80 : 40;
+          SV().coins += reward; PF.Save.save();
+        }
+        App.go(PF.PostMatchScreen(m, res, friend ? '1 НА 1: ИГРОК 1 - ИГРОК 2' : '1 НА 1', () => App.go(Modes.duel(), 'replace')), 'replace');
+      }));
+    }
+    return {
+      enter() { PF.Audio.playMusic('menu'); },
+      resume() { PF.Audio.playMusic('menu'); },
+      update(dt) {
+        menu.items[6].disabled = q.vs === 'friend';
+        menu.update(dt);
+        if (I.pressed('back')) { PF.Audio.play('back'); App.pop(); }
+      },
+      render(ctx) {
+        UI.bg(ctx, App.t);
+        UI.header(ctx, '1 НА 1: ДУЭЛЬ', q.vs === 'friend' ? 'ИГРА ВДВОЕМ' : 'ПРОТИВ ИИ');
+        const a = myP(), b = opP();
+        // карточки дуэлянтов
+        drawCard(ctx, a, 22, 22, 1);
+        ctx.drawImage(PF.Sprites.crest(D.TEAMS[hi], 1), 66, 24);
+        F.draw(ctx, q.vs === 'friend' ? 'ИГРОК 1' : 'ВЫ', 66, 44, COL.accent2);
+        F.draw(ctx, D.TEAMS[hi].short, 66, 54, COL.dim);
+        drawCard(ctx, b, 322, 22, 1);
+        ctx.drawImage(PF.Sprites.crest(D.TEAMS[ai], 1), 304, 24);
+        F.draw(ctx, q.vs === 'friend' ? 'ИГРОК 2' : 'ИИ', 318, 44, q.vs === 'friend' ? '#40e0e0' : COL.dim, 1, 2);
+        F.draw(ctx, D.TEAMS[ai].short, 318, 54, COL.dim, 1, 2);
+        F.draw(ctx, 'VS', 192, 34, COL.accent2, 3, 1, '#000');
+        F.draw(ctx, a.ovr + '  OVR  ' + b.ovr, 192, 62, COL.text, 1, 1);
+        menu.render(ctx, 92, 80, 200, 11);
+        if (q.vs === 'friend') {
+          F.draw(ctx, 'ИГРОК 1: WASD, SHIFT, F ПАС, G НАВЕС, H УДАР, R НА ХОД', 192, 170, COL.accent2, 1, 1);
+          F.draw(ctx, 'ИГРОК 2: СТРЕЛКИ, ПР.SHIFT, . ПАС , НАВЕС / УДАР ; НА ХОД', 192, 180, '#40e0e0', 1, 1);
+          F.draw(ctx, 'ИЛИ ДВА ГЕЙМПАДА', 192, 190, COL.dim, 1, 1);
+        } else F.draw(ctx, 'ВРАТАРЬ + ОДИН ПОЛЕВОЙ С КАЖДОЙ СТОРОНЫ', 192, 176, COL.dim, 1, 1);
+        UI.footer(ctx, [['▲▼', 'ПУНКТ'], ['◄►', 'ИЗМЕНИТЬ'], ['J', 'ОК'], ['ESC', 'НАЗАД']]);
+      },
+    };
+  };
+
   PF.Modes = Modes;
 })(window.PF);

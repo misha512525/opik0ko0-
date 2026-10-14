@@ -134,11 +134,15 @@
   W.overlays = (ctx, m, cam, rt) => {
     const ox = cam.left, oy = cam.top;
     const h = m.human;
-    if (h && h.controlled && !h.controlled.off && m.state !== 'goal') {
-      const p = h.controlled;
+    const hs = m.humans, two = hs.length > 1;
+    for (const hh of hs) {
+      if (!hh.controlled || hh.controlled.off || m.state === 'goal') continue;
+      const p = hh.controlled;
       const sx = Math.round(Proj.sx(p.rx, p.ry) - ox), sy = Math.round(Proj.sy(p.ry, p.rz) - oy);
       const bob = ((rt * 6) | 0) & 1;
-      const col = C.COL.accent2;
+      // игрок 1 — жёлтый маркер, игрок 2 — голубой; при игре вдвоём над маркером номер игрока
+      const col = hh.pad ? '#40e0e0' : C.COL.accent2;
+      if (two && sx > -4 && sx < cam.vw + 4) PF.Font.drawSmall(ctx, String(hh.pad + 1), sx, sy - 33 + bob, col, 1);
       if (sx > -4 && sx < cam.vw + 4 && sy > 0 && sy < cam.vh + 24) {
         ctx.fillStyle = '#140f1c'; ctx.fillRect(sx - 3, sy - 27 + bob, 7, 1); ctx.fillRect(sx - 2, sy - 26 + bob, 5, 1); ctx.fillRect(sx - 1, sy - 25 + bob, 3, 1);
         ctx.fillStyle = col; ctx.fillRect(sx - 2, sy - 27 + bob, 5, 1); ctx.fillRect(sx - 1, sy - 26 + bob, 3, 1);
