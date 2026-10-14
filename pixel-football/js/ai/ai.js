@@ -372,7 +372,7 @@
         const danger = pa < 22 && pd < 3 && passQ < 0.05;
         const best = Math.max(shotQ, passQ, crossQ, dribQ);
         if (danger && !p.isGK) {
-          p.clear(t.dir, p.y < MY ? -0.6 : 0.6, 24, 6, 'clear');
+          p.clear(t.dir, p.y < MY ? -0.6 : 0.6, 29, 7, 'clear');
           return;
         }
         if (shotQ > 0.4 && shotQ >= best - 0.12) {

@@ -231,7 +231,9 @@
     passTo(tx, ty, arrive, type, receiver) {
       const b = this.m.ball;
       const d = Math.hypot(tx - b.x, ty - b.y);
-      let v = U.clamp(passSpeed(d, arrive || C.PASS_ARRIVE), C.PASS_MIN * 0.6, C.PASS_MAX + this.s.pas / 20);
+      // длинный пас приходит быстрее короткого
+      const arr = (arrive || C.PASS_ARRIVE) + Math.max(0, d - 12) * 0.12;
+      let v = U.clamp(passSpeed(d, arr), C.PASS_MIN, C.PASS_MAX + this.s.pas / 20);
       const e = this.errFor(this.s.pas, d > 30 ? 1.3 : 1);
       const ang = Math.atan2(ty - b.y, tx - b.x) + U.gauss() * 0.075 * e;
       v *= 1 + U.gauss() * 0.06 * e;
@@ -263,7 +265,7 @@
       const gx = this.team.dir > 0 ? C.PITCH_L : 0;
       const e = this.errFor(this.s.sho, 1.5 + Math.max(0, power - 0.85) * 3);
       const dist = Math.hypot(gx - b.x, aimY - b.y);
-      const v = (C.SHOT_MIN + (C.SHOT_MAX - C.SHOT_MIN) * power) * (0.72 + this.s.sho / 360);
+      const v = (C.SHOT_MIN + (C.SHOT_MAX - C.SHOT_MIN) * power) * (0.8 + this.s.sho / 500);
       const ang = Math.atan2(aimY - b.y, gx - b.x) + U.gauss() * 0.11 * e;
       const t = dist / (v * 0.96);
       let vz = (aimZ - b.z) / t + 0.5 * C.GRAVITY * t;

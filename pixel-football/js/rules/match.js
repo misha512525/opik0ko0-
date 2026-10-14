@@ -232,7 +232,7 @@
           const dl = Math.hypot(dx, dy) || 1;
           let tx = q.x + dx / dl * lead, ty = q.y + dy / dl * lead;
           tx = t.dir > 0 ? Math.min(tx, gx - 3) : Math.max(tx, gx + 3); ty = U.clamp(ty, 2, W - 2);
-          p.passTo(tx, ty, auto ? 8 : U.lerp(6, 11, pw), 'through', q);
+          p.passTo(tx, ty, auto ? 11 : U.lerp(8, 14, pw), 'through', q);
           q.runT = 2.2; q.runX = tx; q.runY = ty;
           this.setControlled(t, q);
         }
@@ -555,7 +555,7 @@
         // вратарь: сейв / ловля / отбивание
         const isShot = this.lastShot && this.lastShot.team !== t && b.kickT < 2.5 && (b.kickType === 'shot' || b.kickType === 'header');
         if (isShot) {
-          const chance = U.clamp(0.6 + p.s.gk / 260 - (speed - 18) / 60 + (p.state === 'dive' ? 0.06 : 0) - (b.z > 2 ? 0.08 : 0), 0.2, 0.95);
+          const chance = U.clamp(0.66 + p.s.gk / 260 - (speed - 23) / 70 + (p.state === 'dive' ? 0.06 : 0) - (b.z > 2 ? 0.08 : 0), 0.25, 0.95);
           if (Math.random() > chance) { p.kickCD = 0.35; return; } // мяч проходит мимо рук
           if (!this.so) { p.st.saves++; t.stats.saves++; }
           if (this.lastShot.entry) this.lastShot.entry.res = 'save';
@@ -563,7 +563,7 @@
           Comm.say('save', { player: p.name }, 1);
           PF.Audio.crowdExcite(0.5);
           snd('save');
-          if (speed < 13 + p.s.gk / 14 && Math.random() < 0.75 && b.z < 2.3) this.gkCatch(p);
+          if (speed < 17 + p.s.gk / 14 && Math.random() < 0.75 && b.z < 2.3) this.gkCatch(p);
           else this.gkParry(p);
           b.lastTouch = p; this.possTeam = t.idx;
           return;
@@ -630,22 +630,22 @@
         PF.Input.use(0);
         if (act === 'shoot') {
           const aimY = a.y < -0.35 ? Ball.Y1 + 0.6 : a.y > 0.35 ? Ball.Y2 - 0.6 : MY + U.gauss() * 2;
-          p.header(gx - p.x, aimY - p.y, 13 + p.s.phy / 12, -0.5 + Math.random(), 'shot');
+          p.header(gx - p.x, aimY - p.y, 16 + p.s.phy / 12, -0.5 + Math.random(), 'shot');
         } else {
           const q = this.passTarget(p, a.x, a.y, act === 'lob');
-          if (q) { p.header(q.x - p.x, q.y - p.y, 11, 2.5, 'header'); this.setControlled(t, q); } else p.header(Math.cos(p.facing), Math.sin(p.facing), 10, 2.5);
+          if (q) { p.header(q.x - p.x, q.y - p.y, 14, 2.5, 'header'); this.setControlled(t, q); } else p.header(Math.cos(p.facing), Math.sin(p.facing), 13, 2.5);
         }
         return;
       }
       // ИИ (или человек без нажатия): удар у чужих ворот, вынос у своих, иначе скидка партнёру
       if (dGoal < 15 && AI.ax(t, p.x) > 80) {
         const aimY = AI.shotAim(this, p);
-        p.header(gx - p.x, aimY - p.y, 12 + p.s.phy / 12, -0.8 + Math.random() * 1.2, 'shot');
+        p.header(gx - p.x, aimY - p.y, 15 + p.s.phy / 12, -0.8 + Math.random() * 1.2, 'shot');
       } else if (AI.ax(t, p.x) < 40) {
         p.header(t.dir, (p.y < MY ? -0.5 : 0.5), 15, 5, 'clear');
       } else {
         const q = this.passTarget(p, t.dir, 0, false);
-        if (q) p.header(q.x - p.x, q.y - p.y, 11, 2.5); else p.header(t.dir, 0, 11, 3);
+        if (q) p.header(q.x - p.x, q.y - p.y, 14, 2.5); else p.header(t.dir, 0, 14, 3);
       }
     }
 
