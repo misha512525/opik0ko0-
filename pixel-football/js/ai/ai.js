@@ -142,7 +142,9 @@
       else {
         const c = b.owner;
         const lead = Math.min(0.5, Math.hypot(c.x - p.x, c.y - p.y) / 12);
-        tgtX = c.x + c.vx * lead; tgtY = c.y + c.vy * lead;
+        // заходим со стороны своих ворот: перекрываем путь, а не догоняем сзади
+        const ogx = t.dir > 0 ? 0 : L, gdx = ogx - c.x, gdy = MY - c.y, gl = Math.hypot(gdx, gdy) || 1;
+        tgtX = c.x + c.vx * lead + gdx / gl * 1.1; tgtY = c.y + c.vy * lead + gdy / gl * 1.1;
         // у человека-соперника не прилипаем вплотную, а держим дистанцию для отбора
         const dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy) || 1;
         if (d < 2.6 && p.tackleCD > 0) { tgtX = c.x + dx / d * 1.2; tgtY = c.y + dy / d * 1.2; }
@@ -165,14 +167,16 @@
         shapeTarget(m, t, p, tmp);
         let x = tmp.x, y = tmp.y;
         if (!ctx.inPoss && p.slot > 0) {
-          // опека ближайшего соперника рядом с зоной
+          // опека ближайшего соперника рядом с зоной; убегающего за спину ведём плотнее
           const o = p.markOn;
           if (o && !o.off) {
             const oa = ax(t, o.x);
-            if (oa < ctx.bx + 25 && Math.hypot(o.x - x, o.y - y) < 14) {
+            const running = (t.dir > 0 ? -o.vx : o.vx) > 4.5;
+            if (oa < ctx.bx + 25 && (Math.hypot(o.x - x, o.y - y) < 14 || running)) {
               markTarget(t, p, o, tmp);
-              const k = p.def.role === 'DEF' || t.slots[p.slot].role === 'DEF' ? 0.65 : 0.45;
+              const k = running ? 0.9 : p.def.role === 'DEF' || t.slots[p.slot].role === 'DEF' ? 0.65 : 0.45;
               x = U.lerp(x, tmp.x, k); y = U.lerp(y, tmp.y, k);
+              if (running) p.trackRun = 0.6;
             }
           }
         } else if (ctx.inPoss && b.owner && b.owner.team === t) {
@@ -186,13 +190,16 @@
             x = U.lerp(x, wx(t, U.clamp(sa, 4, ctx.offLine - 1)), 0.65); y = U.lerp(y, wy(t, U.clamp(sb, 3, W - 3)), 0.65);
           }
         }
-        p.tx = x; p.ty = y;
+        // гистерезис: мелкие поправки цели не дёргают игрока туда-обратно
+        if (p.tx == null || Math.hypot(x - p.tx, y - p.ty) > 1.8 || ctx.inPoss !== p.lastPoss) { p.tx = x; p.ty = y; }
+        p.lastPoss = ctx.inPoss;
       }
       tgtX = p.tx; tgtY = p.ty;
+      if (p.trackRun > 0) { p.trackRun -= dt; sprint = true; }
       if (p.runT > 0) { p.runT -= dt; sprint = true; tgtX = p.runX; tgtY = p.runY; }
       p.faceX = b.x; p.faceY = b.y;
       // поздний перехват мимо летящего мяча
-      if (loose && p.icT < 0.6 && ctx.chaseT > 0.8) { const i = p.icI; tgtX = PX[i]; tgtY = PY[i]; sprint = true; }
+      if (loose && p.icT < 0.35 && ctx.chaseT > 0.8) { const i = p.icI; tgtX = PX[i]; tgtY = PY[i]; sprint = true; }
     }
     moveTo(p, tgtX, tgtY, sprint, urgent);
   }
@@ -317,6 +324,8 @@
     const gx = t.dir > 0 ? L : 0;
     const pa = ax(t, p.x), pb = ay(t, p.y);
     const urgent = pd < 1.8 && p.holdT > 0.25;
+    // хладнокровие: без давления игрок сначала ведёт мяч, а не отдаёт его сразу
+    if (p.holdT < 0.05 || p.composeT == null) p.composeT = U.rand(0.5, 1.2) * (diff.decide / 0.27);
     if (p.aiT <= 0 || urgent) {
       p.aiT = diff.decide * (0.75 + Math.random() * 0.5);
       if (p.holdT > 0.18) {
@@ -357,7 +366,7 @@
           const dx = ax(t, o.x) - pa, dy = ay(t, o.y) - pb;
           if (dx > -1 && dx < 14 && Math.abs(dy) < dx * 0.9 + 2) space = Math.min(space, Math.hypot(dx, dy));
         }
-        let dribQ = 0.08 + space / 14 * 0.5 - (pd < 1.6 ? 0.35 : 0) + (p.s.dri - 65) / 220 + noise();
+        let dribQ = 0.12 + space / 14 * 0.55 - (pd < 1.6 ? 0.35 : 0) + (p.s.dri - 65) / 220 + noise();
         if (p.isGK) dribQ = -9;
         // защитник под давлением у своих ворот — вынос
         const danger = pa < 22 && pd < 3 && passQ < 0.05;
@@ -376,7 +385,9 @@
           p.lobTo(crossTarget.x + U.rand(-1.5, 1.5), crossTarget.y + U.rand(-1.5, 1.5), 1.5, 'cross', crossTarget);
           return;
         }
-        if (passQ >= best && passQ > (pd < 2.2 ? -0.45 : 0.02) && passOut.q) {
+        const composed = p.holdT > p.composeT || pd < 1.9 || passQ > 0.5;
+        const passBar = pd < 2.2 ? -0.45 : 0.04 + Math.min(space, 12) / 12 * 0.12;
+        if (composed && passQ >= best && passQ > passBar && passOut.q) {
           const q = passOut.q;
           if (passOut.lob) p.lobTo(passOut.x, passOut.y, 0, passOut.type === 'through' ? 'through' : 'lob', q);
           else p.passTo(passOut.x, passOut.y, passOut.type === 'through' ? 8 : C.PASS_ARRIVE, passOut.type, q);
@@ -391,22 +402,29 @@
         }
       }
     }
-    // --- ведение: к воротам с обходом соперников и бровок ---
-    let dxw = t.dir, dyw = 0;
-    if (pa > 68) { dxw = gx - p.x; dyw = MY - p.y; const l = Math.hypot(dxw, dyw); dxw /= l; dyw /= l; }
-    for (const o of opp.players) {
-      if (o.off) continue;
-      const ox = o.x - p.x, oy = o.y - p.y, d = Math.hypot(ox, oy);
-      if (d < 6 && d > 0.01 && (ox * dxw + oy * dyw) > -0.5) {
-        // отталкивание от соперника, сильнее поперёк направления атаки
-        const w = (6 - d) / 6 * 1.4;
-        dxw -= ox / d * w * 0.4; dyw -= oy / d * w * 0.8;
+    // --- ведение: перебираем 7 направлений вокруг курса на ворота и выбираем самое свободное ---
+    const a0 = pa > 68 ? Math.atan2(MY - p.y, gx - p.x) : (t.dir > 0 ? 0 : Math.PI);
+    let bestA = a0, bs = -1e9;
+    for (let k = -3; k <= 3; k++) {
+      const a = a0 + k * 0.38, dx = Math.cos(a), dy = Math.sin(a);
+      let s = dx * t.dir;
+      for (const o of opp.players) {
+        if (o.off) continue;
+        const ox = o.x - p.x, oy = o.y - p.y;
+        const proj = ox * dx + oy * dy;
+        if (proj <= -0.5 || proj > 9) continue;
+        const lat = Math.abs(ox * dy - oy * dx);
+        if (lat < 2.6) s -= (2.6 - lat) / 2.6 * (9 - Math.max(0, proj)) / 9 * 1.6;
       }
+      const ny = p.y + dy * 6, nx = p.x + dx * 6;
+      if (ny < 2 || ny > W - 2) s -= 1.2;
+      if (nx < 1 || nx > L - 1) s -= 1.5;
+      if (p.dribA != null) s -= Math.abs(U.angDiff(a, p.dribA)) * 0.3; // без рывков из стороны в сторону
+      if (s > bs) { bs = s; bestA = a; }
     }
-    if (p.y < 4) dyw += 0.8; if (p.y > W - 4) dyw -= 0.8;
-    const l = Math.hypot(dxw, dyw) || 1;
-    p.ix = dxw / l; p.iy = dyw / l;
-    p.sprint = pd > 3 && p.stamina > 0.25;
+    p.dribA = bestA;
+    p.ix = Math.cos(bestA); p.iy = Math.sin(bestA);
+    p.sprint = pd > 3 && p.stamina > 0.25 && bs > 0.3;
     if (p.isGK) { p.ix = 0; p.iy = 0; }
   }
 

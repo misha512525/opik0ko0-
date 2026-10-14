@@ -117,10 +117,13 @@
   const SIDE_ONLY = new Set([P.FALLEN, P.DIVE_UP, P.DIVE_DOWN]);
 
   // ---------- Растеризация скелета ----------
+  // полоса на гетрах (цвет отделки формы) между голенью и носком
   function legColor(far) {
-    return (t) => (t < 0.1 ? SH : t < 0.36 ? (far ? SKS : SK) : t < 0.8 ? (far ? SOS : SO) : BO);
+    return (t) => (t < 0.1 ? SH : t < 0.36 ? (far ? SKS : SK) : t < 0.43 ? (far ? TRS : TR) : t < 0.8 ? (far ? SOS : SO) : BO);
   }
-  function rasterPose(p, pat, isGK) {
+  // Причёски: 0 — короткая, 1 — «ёжик», 2 — длинные, 3 — афро, 4 — ирокез
+  const HAIR_STYLES = 5;
+  function rasterPose(p, pat, isGK, style) {
     buf = new Uint8Array(CELL * CELL);
     const cx = p.neck[0];
     const sleeve = pat === 'sleeves' ? TR : JR;
@@ -144,11 +147,35 @@
     const drawArm = (a, far) => seg(a[0], a[1], a[2], a[3], 0.85, armColor(far));
     const drawTorso = () => box(p.neck[0], p.neck[1], p.hip[0], p.hip[1] + 1.6, p.tw, torsoColor);
     const hx = p.head[0], hy = p.head[1];
-    const drawHead = () => disk(hx, hy, 3.2, (x, y, dx, dy) => {
-      if (p.view === 'B') return dy > 1.6 ? SK : HR;
-      if (p.view === 'S') return (dy < -1.2 || dx < -0.6) && !(dy > 1.4) ? HR : SK;
-      return dy < -1.2 || (dy < 0 && Math.abs(dx) > 2) ? HR : SK;
-    });
+    const V = p.view;
+    const hairAt = (dx, dy) => {
+      switch (style) {
+        case 1: // «ёжик»
+          if (V === 'B') return dy < 0.8;
+          if (V === 'S') return dy < -1.9 || (dx < -1.6 && dy < 0.2);
+          return dy < -1.9;
+        case 2: // длинные
+          if (V === 'B') return true;
+          if (V === 'S') return dy < -1.2 || dx < -0.2;
+          return dy < -1.2 || (Math.abs(dx) > 1.6 && dy < 2);
+        case 4: // ирокез
+          if (V === 'S') return dy < -1.6;
+          return Math.abs(dx) < 1.1 && dy < 0.6 * (V === 'B' ? 3 : 0) - 0.4;
+        default: // короткая и афро
+          if (V === 'B') return dy <= 1.6;
+          if (V === 'S') return (dy < -1.2 || dx < -0.6) && !(dy > 1.4);
+          return dy < -1.2 || (dy < 0 && Math.abs(dx) > 2);
+      }
+    };
+    const drawHead = () => {
+      if (style === 3) disk(hx - (V === 'S' ? 0.6 : 0), hy - 1, 4.1, () => HR); // пышная шевелюра за головой
+      disk(hx, hy, 3.2, (x, y, dx, dy) => (hairAt(dx, dy) ? HR : SK));
+      if (style === 4) { put(Math.floor(hx - 0.5), Math.floor(hy - 4.2), HR); put(Math.floor(hx + (V === 'S' ? -1.5 : 0.5)), Math.floor(hy - 4.2), HR); }
+      if (style === 2 && V !== 'F') { // волосы до плеч
+        const bx = V === 'S' ? hx - 2.5 : hx - 2;
+        for (let k = 0; k < (V === 'S' ? 2 : 4); k++) { put(Math.floor(bx + k), Math.floor(hy + 3.2), HR); put(Math.floor(bx + k), Math.floor(hy + 4.1), HR); }
+      }
+    };
     if (p.view === 'S') {
       drawArm(p.arms[0], true); drawLeg(p.legs[0], true); drawTorso(); drawLeg(p.legs[1], false); drawHead(); drawArm(p.arms[1], false);
       // глаз и нос
@@ -186,8 +213,8 @@
   // Буферы поз кэшируются по узору формы (геометрия не зависит от цвета)
   const poseCache = new Map();
   const META = []; // [pose*4+dir] -> {numX, numY} для номера на спине
-  function poseBuffers(pat, isGK) {
-    const key = pat + (isGK ? 'g' : '');
+  function poseBuffers(pat, isGK, style) {
+    const key = pat + (isGK ? 'g' : '') + style;
     if (poseCache.has(key)) return poseCache.get(key);
     const arr = [];
     for (let pose = 0; pose < P.COUNT; pose++) {
@@ -198,7 +225,7 @@
         else {
           const d = sideOnly ? 2 : dir;
           const p = POSES[pose](d);
-          b = rasterPose(p, pat, isGK);
+          b = rasterPose(p, pat, isGK, style);
           if (!META[pose * 4 + dir]) META[pose * 4 + dir] = p.view === 'B' ? { numX: p.neck[0], numY: Math.round(p.neck[1]) + 1 } : null;
         }
         if (dir === 3 && !META[pose * 4 + 3]) META[pose * 4 + 3] = null;
@@ -211,21 +238,25 @@
 
   // ---------- Листы спрайтов ----------
   const sheets = new Map();
-  function kitPalette(kit, skin, hair) {
+  const BOOTS = ['#1c1c24', '#f4f4f4', '#ff4f5e', '#3cf0a0', '#ffd23c', '#4fa3ff'];
+  function kitPalette(kit, skin, hair, boots) {
     const sk = SKINS[skin], hr = HAIRS[hair];
     const pal = [];
     pal[OL] = '#140f1c'; pal[SK] = sk[0]; pal[SKS] = sk[1]; pal[HR] = hr; pal[HRS] = U.shade(hr, -0.3);
     pal[JR] = kit.p; pal[JRS] = U.shade(kit.p, -0.28); pal[TR] = kit.s; pal[TRS] = U.shade(kit.s, -0.28);
     pal[SH] = kit.shorts; pal[SHS] = U.shade(kit.shorts, -0.3); pal[SO] = kit.socks; pal[SOS] = U.shade(kit.socks, -0.25);
-    pal[BO] = kit.boots || '#1c1c24'; pal[EY] = '#1a1020'; pal[GL] = kit.gk ? '#f4f4f4' : sk[0]; pal[WH] = '#ffffff';
+    pal[BO] = kit.boots || BOOTS[boots]; pal[EY] = '#1a1020'; pal[GL] = kit.gk ? '#f4f4f4' : sk[0]; pal[WH] = '#ffffff';
     return pal.map((c) => (c ? U.hex2rgb(c) : null));
   }
-  function sheetFor(kit, skin, hair) {
-    const key = kit.p + kit.s + kit.pat + kit.shorts + kit.socks + (kit.gk ? 'g' : '') + skin + hair;
+  // look — внешность игрока (причёска и цвет бутс), см. lookOf()
+  function sheetFor(kit, skin, hair, look) {
+    look = look | 0;
+    const style = look % HAIR_STYLES, boots = Math.floor(look / HAIR_STYLES) % BOOTS.length;
+    const key = kit.p + kit.s + kit.pat + kit.shorts + kit.socks + (kit.gk ? 'g' : '') + skin + hair + ':' + look;
     let s = sheets.get(key);
     if (s) return s;
-    const bufs = poseBuffers(kit.pat, kit.gk);
-    const pal = kitPalette(kit, skin, hair);
+    const bufs = poseBuffers(kit.pat, kit.gk, style);
+    const pal = kitPalette(kit, skin, hair, boots);
     const W = P.COUNT * CELL, H = 4 * CELL;
     const c = U.makeCanvas(W, H);
     const cx = c.getContext('2d');
@@ -246,6 +277,9 @@
     sheets.set(key, s);
     return s;
   }
+
+  // Внешность по id игрока: детерминированно, у каждого своя причёска и бутсы
+  function lookOf(def) { return def && def.id ? PF.U.hashStr(def.id) % (HAIR_STYLES * BOOTS.length) : 0; }
 
   // Рисует игрока: (sx, sy) — экранная точка ступней
   function drawPlayer(ctx, sheet, pose, dir, sx, sy, num) {
@@ -344,7 +378,7 @@
   function portrait(def, kit) {
     const key = def.id + kit.p;
     if (portraits.has(key)) return portraits.get(key);
-    const sh = sheetFor(kit, def.skin, def.hair);
+    const sh = sheetFor(kit, def.skin, def.hair, lookOf(def));
     const c = U.makeCanvas(32, 30);
     const x = c.getContext('2d');
     x.drawImage(sh.canvas, P.IDLE * CELL + 2, 1, 20, 15, 0, 0, 40, 30);
@@ -355,8 +389,8 @@
   PF.Sprites = {
     CELL, AX, AY,
     init: buildMisc,
-    sheetFor, drawPlayer, drawBall, drawShadow, crest, portrait,
-    clearSheets: () => { if (sheets.size > 80) sheets.clear(); },
+    sheetFor, drawPlayer, lookOf: (def) => lookOf(def), drawBall, drawShadow, crest, portrait,
+    clearSheets: () => { if (sheets.size > 120) sheets.clear(); },
     refereeKit: { p: '#1c1c22', s: '#f0d020', pat: 'plain', shorts: '#1c1c22', socks: '#1c1c22' },
   };
 })(window.PF);

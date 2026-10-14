@@ -57,7 +57,7 @@
     }
   }
 
-  function buildGround(night) {
+  function buildGround(night, homeKit, awayKit) {
     ground = U.makeCanvas(GW, GH);
     const c = ground.getContext('2d');
     const g1 = night ? '#2f7a34' : '#3e9a3c', g2 = night ? '#2a6e2f' : '#368a35', track = night ? '#24402a' : '#2f5a35';
@@ -69,11 +69,14 @@
       const y = (r + Y0) / C.PPM_Y;
       const xa = Proj.sx(-12, y) - X0, xb = Proj.sx(117, y) - X0;
       c.fillStyle = track; c.fillRect(0, r, GW, 1);
+      // шахматный покос: поперечные полосы чуть светлее/темнее продольных
+      const band = Math.floor((y + 40) / 8.5) & 1;
+      const ga = band ? g1 : U.shade(g1, -0.04), gb = band ? U.shade(g2, 0.04) : g2;
       for (let s = -3; s < 21; s++) {
         const a = Math.max(-12, s * SW), b = Math.min(117, (s + 1) * SW);
         if (b <= a) continue;
         const sa = Proj.sx(a, y) - X0, sb = Proj.sx(b, y) - X0;
-        c.fillStyle = (s & 1) ? g1 : g2;
+        c.fillStyle = (s & 1) ? ga : gb;
         c.fillRect(Math.round(sa), r, Math.round(sb) - Math.round(sa), 1);
       }
       if (xa > 0) { c.fillStyle = track; c.fillRect(0, r, Math.round(xa), 1); }
@@ -82,9 +85,15 @@
     // Текстура травы
     const img = c.getImageData(0, STAND_BOTTOM - Y0, GW, GH - (STAND_BOTTOM - Y0));
     const d = img.data;
+    const rowW = GW * 4;
     for (let i = 0; i < d.length; i += 4) {
       const v = rng.next();
       if (v < 0.05) { d[i] *= 0.88; d[i + 1] *= 0.9; d[i + 2] *= 0.88; } else if (v > 0.97) { d[i] = Math.min(255, d[i] * 1.12); d[i + 1] = Math.min(255, d[i + 1] * 1.1); }
+      // днём на дальнюю часть поля падает тень от крыши главной трибуны
+      if (!night) {
+        const wy = ((i / rowW | 0) + STAND_BOTTOM) / C.PPM_Y;
+        if (wy < 9) { const k = U.lerp(0.74, 1, U.clamp((wy + 4) / 13, 0, 1)); d[i] *= k; d[i + 1] *= k; d[i + 2] *= k * 1.04; }
+      }
     }
     c.putImageData(img, 0, STAND_BOTTOM - Y0);
 
@@ -123,8 +132,29 @@
     }
 
     // Рекламные щиты: дальние (за бровкой) и ближние
-    drawBoards(c, -2.8, 7);
+    drawBoards(c, -2.3, 7);
     drawBoards(c, 71.2, 8);
+    // Скамейки запасных с технической зоной
+    drawDugout(c, 44, homeKit);
+    drawDugout(c, 61, awayKit);
+  }
+
+  function drawDugout(c, wx, kit) {
+    const x = Math.round(Proj.sx(wx, -1.4) - X0), y = Math.round(Proj.sy(-1.4) - Y0);
+    // техническая зона — пунктир
+    c.fillStyle = 'rgba(240,248,240,0.55)';
+    for (let k = -14; k < 34; k += 3) c.fillRect(x + k, y + 6, 1, 1);
+    // навес
+    c.fillStyle = '#140f1c'; c.fillRect(x - 1, y - 9, 22, 11);
+    c.fillStyle = '#5a6488'; c.fillRect(x, y - 8, 20, 9);
+    c.fillStyle = 'rgba(160,210,255,0.55)'; c.fillRect(x + 1, y - 7, 18, 5);
+    c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(x + 1, y - 7, 18, 1);
+    // запасные в форме команды
+    for (let k = 0; k < 5; k++) {
+      c.fillStyle = kit ? kit.p : '#888'; c.fillRect(x + 2 + k * 4, y - 2, 3, 2);
+      c.fillStyle = ['#f2c69a', '#c98d5e', '#7d5136'][k % 3]; c.fillRect(x + 2 + k * 4 + 1, y - 4, 2, 2);
+    }
+    c.fillStyle = '#2a3150'; c.fillRect(x, y, 20, 1);
   }
 
   function drawBoards(c, wy, h) {
@@ -178,6 +208,9 @@
         c.fillStyle = '#5a6488'; c.fillRect(x, 1, 18, 6);
         c.fillStyle = night ? '#fffbe0' : '#e8ecf8'; for (let k = 0; k < 4; k++) c.fillRect(x + 1 + k * 4, 2, 3, 4);
       }
+      // фермы крыши
+      c.fillStyle = 'rgba(90,100,136,0.35)';
+      for (let x = 0; x < GW; x += 12) { c.fillRect(x, 8, 1, TOP - 11); c.fillRect(x, 8, 6, 1); }
       // Ступени
       for (let r = 0; r < rows; r++) {
         c.fillStyle = r & 1 ? '#262c44' : '#2c3350';
@@ -213,6 +246,16 @@
       }
       // Беговая дорожка между трибуной и полем
       c.fillStyle = night ? '#24402a' : '#2f5a35'; c.fillRect(0, H - 6, GW, 6);
+      // мачты прожекторов у углов поля
+      for (const fx of [-7, 112]) {
+        const tx = Math.round(Proj.sx(fx, -4) - X0);
+        c.fillStyle = '#3a4466'; c.fillRect(tx - 1, 4, 3, H - 10);
+        c.fillStyle = '#5a6488'; for (let yy = 8; yy < H - 8; yy += 6) c.fillRect(tx - 2, yy, 5, 1);
+        c.fillStyle = '#140f1c'; c.fillRect(tx - 9, 0, 19, 9);
+        c.fillStyle = night ? '#fffbe0' : '#d8dcec';
+        for (let k = 0; k < 4; k++) for (let j = 0; j < 2; j++) c.fillRect(tx - 8 + k * 4 + j * 0, 1 + j * 4, 3, 3);
+        if (night) { c.fillStyle = 'rgba(255,250,200,0.12)'; c.fillRect(tx - 18, 0, 37, 16); }
+      }
       standFrames.push(cv);
     }
   }
@@ -266,7 +309,7 @@
   PF.Pitch = {
     X0, Y0, GW, GH,
     build(homeKit, awayKit, night) {
-      buildGround(night);
+      buildGround(night, homeKit, awayKit);
       buildStands(homeKit, awayKit, night);
       buildGoals();
     },

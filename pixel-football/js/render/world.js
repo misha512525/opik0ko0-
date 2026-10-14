@@ -41,6 +41,17 @@
   // Подписи и цвета шкалы силы: J пас, K навес, U на ход, L удар
   const BAR = { pass: ['J', '#3cf0a0'], lob: ['K', '#4fa3ff'], through: ['U', '#40e0e0'], shoot: ['L', '#ffd23c'] };
 
+  let vig = null;
+  function vignette() {
+    if (vig) return vig;
+    vig = U.makeCanvas(C.W, C.H);
+    const c = vig.getContext('2d');
+    const g = c.createRadialGradient(C.W / 2, C.H / 2, C.H * 0.45, C.W / 2, C.H / 2, C.W * 0.62);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,4,12,0.32)');
+    c.fillStyle = g; c.fillRect(0, 0, C.W, C.H);
+    return vig;
+  }
+
   const W = {};
   W.draw = (ctx, m, cam, alpha, replay, rt) => {
     prepare(m, alpha, replay);
@@ -87,6 +98,15 @@
         S.drawPlayer(ctx, p.sheet, p.rpose, p.rdir, sx, sy, p.num);
       } else if (e.k === K_BALL) {
         const sx = Proj.sx(b.rx, b.ry) - ox, sy = Proj.sy(b.ry, b.rz) - oy;
+        // шлейф быстрого мяча
+        const sp = replay ? 0 : Math.hypot(b.vx, b.vy);
+        if (sp > 15 && !b.owner) {
+          for (let k = 1; k <= 3; k++) {
+            const tx = b.rx - b.vx * 0.018 * k, ty = b.ry - b.vy * 0.018 * k, tz = Math.max(0, b.rz - b.vz * 0.018 * k);
+            ctx.fillStyle = 'rgba(255,255,255,' + (0.45 - k * 0.12) + ')';
+            ctx.fillRect(Math.round(Proj.sx(tx, ty) - ox) - 1, Math.round(Proj.sy(ty, tz) - oy) - 3, 3, 3);
+          }
+        }
         S.drawBall(ctx, sx, sy, b.rframe, b.rz > 2.5);
       } else {
         PF.Pitch.drawGoal(ctx, cam, e.o, true, false);
@@ -106,6 +126,8 @@
     }
     if (!replay) W.overlays(ctx, m, cam, rt);
     ctx.restore();
+    // мягкая виньетка по краям кадра
+    ctx.drawImage(vignette(), 0, 0);
   };
 
   // Маркер управляемого игрока, шкала силы удара, прицел стандарта, карточка судьи

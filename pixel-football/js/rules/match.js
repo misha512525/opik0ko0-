@@ -81,14 +81,15 @@
       };
       const ids = lineupIds || def.squad.map((p) => p.id);
       const defs = ids.map((id) => PF.Data.PLAYERS[id]).filter(Boolean);
-      const mul = human ? 1 : this.diff.statMul;
+      // у человека статы не режутся; в карьере на них влияет мораль команды (o.humanMul)
+      const mul = human ? (this.o.humanMul || 1) : this.diff.statMul;
       for (let i = 0; i < 11; i++) {
         const p = new Player(this, t, defs[i], i);
         p.role = t.slots[i].role;
         p.isGK = i === 0;
         p.setStats(defs[i].stats, mul);
         if (p.isGK && defs[i].role !== 'GK') p.s.gk = Math.max(p.s.gk, 35);
-        p.sheet = PF.Sprites.sheetFor(p.isGK ? gkKit : kit, defs[i].skin, defs[i].hair);
+        p.sheet = PF.Sprites.sheetFor(p.isGK ? gkKit : kit, defs[i].skin, defs[i].hair, PF.Sprites.lookOf(defs[i]));
         t.players.push(p);
       }
       t.bench = defs.slice(11);
@@ -240,6 +241,12 @@
       if (!p.chAct) {
         for (const a of CHARGE_ACTS) if (I.pressed(a)) { p.chAct = a; p.charge = 0; p.chT = 0; break; }
         if (!p.chAct) return false;
+        // режим «авто»: пас, навес и пас на ход — с одного нажатия, сила подбирается сама
+        if (p.chAct !== 'shoot' && !PF.Save.data.settings.manualPass) {
+          const act = p.chAct; p.chAct = null; p.charging = false; p.charge = 0;
+          exec(p, act, ax.x, ax.y, null);
+          return true;
+        }
       }
       p.charging = true;
       p.chT += dt;
@@ -341,7 +348,7 @@
           p.buffer = a; p.bufferT = C.ACTION_BUFFER; p.charge = 0; p.chT = 0;
           if (a === 'pass' && !b.owner && p.icT > 1.2) { const c = this.switchCandidate(t, ax.x, ax.y); if (c) { this.setControlled(t, c); c.buffer = a; c.bufferT = C.ACTION_BUFFER; c.charge = 0; c.chT = 0; p = c; } }
         }
-        if (p.buffer && I.down(p.buffer)) {
+        if (p.buffer && I.down(p.buffer) && (p.buffer === 'shoot' || PF.Save.data.settings.manualPass)) {
           p.charge = Math.min(1, p.charge + dt / C.CHARGE_TIME[p.buffer]); p.chT += dt;
           p.bufferT = Math.max(p.bufferT, 0.15);
         }
@@ -369,7 +376,8 @@
       const a = PF.Input.axis();
       const act = p.buffer; p.buffer = null;
       // кнопка ещё зажата — продолжаем копить силу уже с мячом, удар/пас по отпусканию
-      if (PF.Input.down(act)) { p.chAct = act; p.charging = true; return false; }
+      const manual = act === 'shoot' || PF.Save.data.settings.manualPass;
+      if (manual && PF.Input.down(act)) { p.chAct = act; p.charging = true; return false; }
       const power = p.chT < C.TAP_TIME && act !== 'shoot' ? null : Math.max(act === 'shoot' ? 0.35 : 0, Math.min(1, p.charge));
       p.charge = 0; p.charging = false;
       this.humanAction(p, act, a.x, a.y, power);
@@ -891,7 +899,7 @@
         if (repl) {
           repl.isGK = true; repl.s.gk = Math.max(repl.s.gk, 40);
           const s0 = repl.slot; repl.slot = 0; p.slot = s0;
-          repl.sheet = PF.Sprites.sheetFor(t.gkKit, repl.def.skin, repl.def.hair);
+          repl.sheet = PF.Sprites.sheetFor(t.gkKit, repl.def.skin, repl.def.hair, PF.Sprites.lookOf(repl.def));
         }
       }
       if (t.controlled === p) this.setControlled(t, this.switchCandidate(t, 0, 0));
@@ -919,7 +927,7 @@
       this.lastShot = null; this.lastPass = null;
       const min = this.displayMinute();
       const isPen = this.spLastType === 'penalty' && b.kickT < 3;
-      if (this.mode === 'match') this.goals.push({ team: scorerTeam.idx, name: scorer ? scorer.name : (last ? last.name : '?'), own, min, pen: isPen });
+      if (this.mode === 'match') this.goals.push({ team: scorerTeam.idx, name: scorer ? scorer.name : (last ? last.name : '?'), id: scorer ? scorer.def.id : null, own, min, pen: isPen });
       this.stoppage += C.STOPPAGE_GOAL;
       snd('goal'); snd('net');
       PF.Audio.crowdExcite(1);
@@ -1036,7 +1044,7 @@
       const p = new Player(this, t, inDef, out.slot);
       p.role = out.role; p.isGK = out.isGK;
       p.setStats(inDef.stats, t.human ? 1 : this.diff.statMul);
-      p.sheet = PF.Sprites.sheetFor(p.isGK ? t.gkKit : t.kit, inDef.skin, inDef.hair);
+      p.sheet = PF.Sprites.sheetFor(p.isGK ? t.gkKit : t.kit, inDef.skin, inDef.hair, PF.Sprites.lookOf(inDef));
       p.place(out.x, out.y); p.facing = out.facing;
       t.players[i] = p;
       inDef.used = true;

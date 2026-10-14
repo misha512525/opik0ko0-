@@ -360,6 +360,7 @@
     const menu = new UI.ListMenu([
       { label: 'ДЛИНА ТАЙМА', value: () => st.halfMin + ' МИН', left: () => { st.halfMin = Math.max(1, st.halfMin - 1); PF.Save.save(); }, right: () => { st.halfMin = Math.min(6, st.halfMin + 1); PF.Save.save(); } },
       { label: 'СЛОЖНОСТЬ', value: () => C.DIFF[st.diff].name, left: () => { st.diff = (st.diff + 2) % 3; PF.Save.save(); }, right: () => { st.diff = (st.diff + 1) % 3; PF.Save.save(); } },
+      { label: 'ПАС И НАВЕС', value: () => (st.manualPass ? 'РУЧНАЯ СИЛА' : 'АВТО'), left: () => tog('manualPass'), right: () => tog('manualPass') },
       { label: 'ОФСАЙД', value: () => (st.offside ? 'ВКЛ' : 'ВЫКЛ'), left: () => tog('offside'), right: () => tog('offside') },
       { label: 'КАРТОЧКИ', value: () => (st.cards ? 'ВКЛ' : 'ВЫКЛ'), left: () => tog('cards'), right: () => tog('cards') },
       { label: 'ОБЩАЯ ГРОМКОСТЬ', value: () => Math.round(st.master * 10) + '/10', left: () => vol('master', -0.1), right: () => vol('master', 0.1) },

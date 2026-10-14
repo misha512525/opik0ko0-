@@ -136,7 +136,13 @@
         mm.sa = res.hs; mm.sb = res.as; mm.pa = res.hp; mm.pb = res.ap;
         mm.w = res.winner === 0 ? mm.a : mm.b;
         finishRound();
-        App.go(PF.PostMatchScreen(m, res, 'ТУРНИР: ' + ROUND_NAMES[tr.size][Math.min(tr.round, ROUND_NAMES[tr.size].length - 1)], () => App.go(cupHub(), 'replace')), 'replace');
+        const won = tr.champion && tr.champion === tr.user;
+        const after = () => {
+          if (!won) { App.go(cupHub(), 'replace'); return; }
+          const team = D.team(tr.user);
+          App.go(PF.Ceremony.trophyScreen({ team, short: team.short, defs: PF.Save.teamSetup(team).lineup.slice(0, 11).map((id) => D.PLAYERS[id]), title: 'ПИКСЕЛЬ КУБОК', sub: 'ПОБЕДИТЕЛЬ: ' + team.name + ' · ПРИЗ ' + (tr.size === 8 ? 3000 : 6000) + ' МОНЕТ' }, () => App.go(cupHub(), 'replace')), 'replace');
+        };
+        App.go(PF.PostMatchScreen(m, res, 'ТУРНИР: ' + ROUND_NAMES[tr.size][Math.min(tr.round, ROUND_NAMES[tr.size].length - 1)], after), 'replace');
       });
     }
     const menu = new UI.ListMenu([
@@ -208,11 +214,45 @@
         setup: PF.Save.teamSetup(t),
         fixtures: makeFixtures(lg), table: freshTable(lg), market: [], history: [], news: 'ДОБРО ПОЖАЛОВАТЬ В КЛУБ ' + t.name + '!',
       };
+      careerDefaults(SV().career);
+      addNews(SV().career, 'Новый тренер возглавил ' + t.name + '. Цель: ' + objText(SV().career.objective) + '.');
       refreshMarket();
       PF.Save.save();
       App.go(careerHub(), 'replace');
     });
   };
+  // Поля карьеры, появившиеся в новых версиях (миграция старых сохранений)
+  function careerDefaults(c) {
+    if (c.morale == null) c.morale = 60;
+    if (c.board == null) c.board = 60;
+    if (c.fans == null) c.fans = 60;
+    if (!c.scorers) c.scorers = {};
+    if (!c.pstats) c.pstats = {};
+    if (!c.newsList) c.newsList = [];
+    if (c.objective == null) c.objective = seasonObjective(c);
+    return c;
+  }
+  // Цель сезона: место не ниже, чем «ожидаемое» по рейтингу клуба (+1 запаса)
+  function seasonObjective(c) {
+    const me = D.team(c.club).rating;
+    const rank = 1 + D.TEAMS.filter((x) => x.league === c.league && x.rating > me).length;
+    return rank === 1 ? 1 : Math.min(8, rank + 1);
+  }
+  function objText(o) { return o === 1 ? 'ЧЕМПИОНСТВО' : 'МЕСТО НЕ НИЖЕ ' + o; }
+  function addNews(c, s) { c.newsList.unshift({ s, season: c.season, round: c.round }); if (c.newsList.length > 30) c.newsList.length = 30; }
+  // Голы симулированного матча раздаём игрокам состава (нападающие забивают чаще)
+  function assignGoals(c, ids, n) {
+    const w = ids.map((id) => { const p = D.PLAYERS[id]; return p ? ({ FWD: 6, MID: 2.5, DEF: 0.6, GK: 0 })[p.role] : 0; });
+    const tot = w.reduce((a, b) => a + b, 0) || 1;
+    for (let k = 0; k < n; k++) {
+      let r = Math.random() * tot, i = 0;
+      while (i < w.length - 1 && (r -= w[i]) > 0) i++;
+      c.scorers[ids[i]] = (c.scorers[ids[i]] || 0) + 1;
+    }
+  }
+  const startersOf = (c, teamId) => (teamId === c.club ? c.squad : D.team(teamId).squad.map((p) => p.id)).slice(0, 11);
+  const clamp100 = (v) => U.clamp(Math.round(v), 0, 100);
+
   function freshTable(ids) { const t = {}; for (const id of ids) t[id] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }; return t; }
   // Двухкруговой турнир (метод круга)
   function makeFixtures(ids) {
@@ -258,31 +298,141 @@
       if (c.round >= c.fixtures.length) return null;
       return c.fixtures[c.round].find((g) => g.includes(c.club));
     }
-    function completeRound(mySa, mySb) {
+    // m — сыгранный матч (или null при симуляции). Возвращает тип исхода для пресс-конференции.
+    function completeRound(mySa, mySb, m) {
       const c = car();
       const games = c.fixtures[c.round];
+      let bigGame = null, bigDiff = -1;
       for (const g of games) {
-        if (g.includes(c.club)) { recordResult(c, g[0], g[1], mySa, mySb); continue; }
+        if (g.includes(c.club)) {
+          recordResult(c, g[0], g[1], mySa, mySb);
+          if (m) {
+            for (const gl of m.goals) if (gl.id && !gl.own) c.scorers[gl.id] = (c.scorers[gl.id] || 0) + 1;
+            for (const p of m.finalRatings()) {
+              if (!p.team.human) continue;
+              const s = c.pstats[p.def.id] || (c.pstats[p.def.id] = [0, 0, 0, 0]);
+              s[0] += p.rating; s[1]++; s[2] += p.st.goals; s[3] += p.st.assists;
+            }
+          } else {
+            assignGoals(c, startersOf(c, g[0]), mySa); assignGoals(c, startersOf(c, g[1]), mySb);
+            for (const id of c.squad.slice(0, 11)) { const s = c.pstats[id] || (c.pstats[id] = [0, 0, 0, 0]); s[0] += U.rand(5.8, 7.6); s[1]++; }
+          }
+          continue;
+        }
         const s = simMatch(D.team(g[0]).rating, D.team(g[1]).rating, false);
         recordResult(c, g[0], g[1], s.a, s.b);
+        assignGoals(c, startersOf(c, g[0]), s.a); assignGoals(c, startersOf(c, g[1]), s.b);
+        if (Math.abs(s.a - s.b) > bigDiff) { bigDiff = Math.abs(s.a - s.b); bigGame = [g, s]; }
       }
-      const my = c.club === games.find((g) => g.includes(c.club))[0] ? [mySa, mySb] : [mySb, mySa];
-      const income = my[0] > my[1] ? 900 : my[0] === my[1] ? 450 : 200;
+      const myGame = games.find((g) => g.includes(c.club));
+      const my = c.club === myGame[0] ? [mySa, mySb] : [mySb, mySa];
+      const oppId = myGame[0] === c.club ? myGame[1] : myGame[0];
+      const gap = (D.team(oppId).rating - D.team(c.club).rating) / 10; // >0 — соперник сильнее
+      const res = my[0] > my[1] ? 'win' : my[0] === my[1] ? 'draw' : 'loss';
+      // мораль, руководство, болельщики
+      c.morale = clamp100(c.morale + (res === 'win' ? 5 : res === 'draw' ? 0 : -5));
+      c.board = clamp100(c.board + (res === 'win' ? 3 + Math.max(0, gap) * 2 : res === 'draw' ? gap : -4 + Math.max(0, gap) * 2));
+      c.fans = clamp100(c.fans + (res === 'win' ? 3 : res === 'draw' ? 0 : -3));
+      const income = Math.round((res === 'win' ? 900 : res === 'draw' ? 450 : 200) * (0.8 + c.fans / 250));
       c.budget += income;
       SV().coins += Math.round(income / 3);
       c.history.push(my[0] + ':' + my[1]);
       c.round++;
-      c.news = (my[0] > my[1] ? 'ПОБЕДА! ' : my[0] === my[1] ? 'НИЧЬЯ. ' : 'ПОРАЖЕНИЕ. ') + 'ДОХОД +' + income + '. МЕСТО: ' + (sortedTable(c).indexOf(c.club) + 1);
-      if (c.round >= c.fixtures.length) {
-        const pos = sortedTable(c).indexOf(c.club) + 1;
-        const bonus = [5000, 3000, 2000, 1200, 800, 600, 400, 300][pos - 1] || 300;
-        c.news = pos === 1 ? 'ВЫ ЧЕМПИОН ЛИГИ! ПРЕМИЯ ' + bonus : 'СЕЗОН ЗАВЕРШЕН. МЕСТО ' + pos + '. ПРЕМИЯ ' + bonus;
-        c.budget += bonus; SV().coins += Math.round(bonus / 2);
-        c.finished = true;
-        if (pos === 1) PF.Audio.playMusic('win');
-      }
+      const pos = sortedTable(c).indexOf(c.club) + 1;
+      c.news = (res === 'win' ? 'ПОБЕДА! ' : res === 'draw' ? 'НИЧЬЯ. ' : 'ПОРАЖЕНИЕ. ') + 'ДОХОД +' + income + '. МЕСТО: ' + pos;
+      addNews(c, 'Тур ' + c.round + ': ' + D.team(myGame[0]).name + ' ' + mySa + ':' + mySb + ' ' + D.team(myGame[1]).name + '. Мы на ' + pos + '-м месте.');
+      if (bigGame) addNews(c, 'Также в туре: ' + D.team(bigGame[0][0]).name + ' ' + bigGame[1].a + ':' + bigGame[1].b + ' ' + D.team(bigGame[0][1]).name + '.');
+      const top = Object.keys(c.scorers).sort((a, b) => c.scorers[b] - c.scorers[a])[0];
+      if (top && c.round % 3 === 0) addNews(c, 'Гонка бомбардиров: лидирует ' + D.PLAYERS[top].name + ' (' + c.scorers[top] + ').');
+      if (c.round >= c.fixtures.length) seasonEnd(c);
+      if (c.board <= 0) c.fired = true;
       refreshMarket();
       PF.Save.save();
+      const diff = my[0] - my[1];
+      return { type: diff >= 3 ? 'bigwin' : diff > 0 ? 'win' : diff === 0 ? 'draw' : diff <= -3 ? 'bigloss' : 'loss', opp: D.team(oppId).name };
+    }
+    function seasonEnd(c) {
+      const pos = sortedTable(c).indexOf(c.club) + 1;
+      const bonus = [5000, 3000, 2000, 1200, 800, 600, 400, 300][pos - 1] || 300;
+      c.budget += bonus; SV().coins += Math.round(bonus / 2);
+      c.finished = true; c.finalPos = pos; c.ceremonyDone = false;
+      const met = pos <= c.objective;
+      c.board = clamp100(c.board + (met ? 20 : -12 * (pos - c.objective)));
+      c.news = (pos === 1 ? 'ВЫ ЧЕМПИОН ЛИГИ! ' : 'СЕЗОН ЗАВЕРШЕН: ' + pos + '-Е МЕСТО. ') + 'ПРЕМИЯ ' + bonus;
+      addNews(c, met ? 'Руководство довольно: цель сезона (' + objText(c.objective) + ') выполнена.' : 'Руководство разочаровано: цель (' + objText(c.objective) + ') не выполнена.');
+      if (pos === 1) addNews(c, D.team(c.club).name + ' — чемпион! Болельщики празднуют на улицах.');
+    }
+    // Индивидуальные награды сезона
+    function seasonAwards(c) {
+      const items = [];
+      const top = Object.keys(c.scorers).sort((a, b) => c.scorers[b] - c.scorers[a])[0];
+      if (top) { const d = D.PLAYERS[top]; items.push({ title: 'БОМБАРДИР ЛИГИ', def: d, team: c.squad.includes(top) ? D.team(c.club) : D.team(d.team), value: c.scorers[top] + ' ГОЛОВ' }); }
+      const avg = (id) => { const s = c.pstats[id]; return s && s[1] >= 3 ? s[0] / s[1] : 0; };
+      const mine = c.squad.filter((id) => avg(id) > 0).sort((a, b) => avg(b) - avg(a));
+      if (mine[0]) items.push({ title: 'ИГРОК СЕЗОНА', def: D.PLAYERS[mine[0]], team: D.team(c.club), value: 'СР. ОЦЕНКА ' + avg(mine[0]).toFixed(1) });
+      const young = mine.filter((id) => D.PLAYERS[id].age <= 22)[0];
+      if (young) items.push({ title: 'ЛУЧШИЙ МОЛОДОЙ', def: D.PLAYERS[young], team: D.team(c.club), value: D.PLAYERS[young].age + ' ЛЕТ · ' + avg(young).toFixed(1) });
+      return items;
+    }
+    // Цепочка экранов после тура: пресс-конференция -> (трофей) -> (награды) -> офис / увольнение
+    function afterRound(info) {
+      const c = car();
+      const steps = [];
+      steps.push((next) => PF.Ceremony.press(info.type, { player: info.star || '', opp: info.opp }, (e) => {
+        c.morale = clamp100(c.morale + e.mo); c.board = clamp100(c.board + e.bo); c.fans = clamp100(c.fans + e.fa);
+        addNews(c, 'Тренер на пресс-конференции: «' + e.quote + '»');
+        if (c.board <= 0) c.fired = true;
+        PF.Save.save(); next();
+      }));
+      if (c.finished && !c.ceremonyDone) {
+        if (c.finalPos === 1) steps.push((next) => PF.Ceremony.trophyScreen({ team: D.team(c.club), short: D.team(c.club).short, defs: c.squad.slice(0, 11).map((id) => D.PLAYERS[id]), title: 'ЧЕМПИОН: ' + D.LEAGUES[c.league].name, sub: 'СЕЗОН ' + c.season + ' · ' + D.team(c.club).name }, next));
+        const aw = seasonAwards(c);
+        if (aw.length) steps.push((next) => PF.Ceremony.awards('НАГРАДЫ СЕЗОНА ' + c.season, aw, next));
+        steps.push((next) => { c.ceremonyDone = true; PF.Save.save(); next(); return null; });
+      }
+      const run = (i) => {
+        if (i >= steps.length) {
+          if (car() && car().fired) { App.go(firedScreen(), 'replace'); return; }
+          App.go(careerHub(), 'replace'); return;
+        }
+        const scr = steps[i](() => run(i + 1));
+        if (scr) App.go(scr, 'replace');
+      };
+      run(0);
+    }
+    function firedScreen() {
+      const c = car(), club = D.team(c.club);
+      return {
+        update() { if (I.pressed('ok')) { SV().career = null; PF.Save.save(); App.go(PF.Menus.main(), 'reset'); } },
+        render(ctx) {
+          UI.bg(ctx, App.t);
+          UI.panel(ctx, 62, 50, 260, 110, 'ОФИЦИАЛЬНО', COL.red);
+          ctx.drawImage(PF.Sprites.crest(club, 2), 72, 66);
+          F.wrap('Руководство клуба ' + club.name + ' приняло решение расстаться с главным тренером. Спасибо за работу!', 200).forEach((l, i) => F.draw(ctx, l, 108, 68 + i * 10, COL.text));
+          F.draw(ctx, 'СЕЗОНОВ: ' + c.season + '   ДОВЕРИЕ РУКОВОДСТВА: 0', 192, 132, COL.dim, 1, 1);
+          UI.footer(ctx, [['J', 'В ГЛАВНОЕ МЕНЮ']]);
+        },
+      };
+    }
+    function newsScreen() {
+      return {
+        update() { if (I.pressed('back') || I.pressed('ok')) { PF.Audio.play('back'); App.pop(); } },
+        render(ctx) {
+          const c = car();
+          UI.bg(ctx, App.t);
+          UI.header(ctx, 'НОВОСТИ КЛУБА', 'СЕЗОН ' + c.season);
+          UI.panel(ctx, 8, 22, C.W - 16, 176, 'ЛЕНТА', '#1d3a8a');
+          let y = 34;
+          for (const n of c.newsList) {
+            const lines = F.wrap(n.s, C.W - 60);
+            if (y + lines.length * 9 > 194) break;
+            F.draw(ctx, 'Т' + n.round, 14, y, COL.accent2);
+            lines.forEach((l, i) => F.draw(ctx, l, 40, y + i * 9, COL.text));
+            y += lines.length * 9 + 4;
+          }
+          UI.footer(ctx, [['ESC', 'НАЗАД']]);
+        },
+      };
     }
     function play(sim) {
       const c = car(), g = myFixture();
@@ -290,32 +440,52 @@
       if (sim) {
         const avg = Math.round(c.squad.slice(0, 11).reduce((s, id) => s + D.PLAYERS[id].ovr, 0) / 11);
         const isHome = g[0] === c.club;
-        const s = isHome ? simMatch(avg + 2, D.team(g[1]).rating, false) : simMatch(D.team(g[0]).rating + 2, avg, false);
-        completeRound(s.a, s.b);
+        const mo = (c.morale - 50) / 25; // мораль влияет и на симуляцию
+        const s = isHome ? simMatch(avg + 2 + mo, D.team(g[1]).rating, false) : simMatch(D.team(g[0]).rating + 2, avg + mo, false);
+        const info = completeRound(s.a, s.b, null);
+        const myGoals = isHome ? s.a : s.b;
+        info.star = myGoals > 0 ? D.PLAYERS[c.squad.slice(0, 11).filter((id) => D.PLAYERS[id].role === 'FWD')[0] || c.squad[9]].name : '';
         msg = 'СИМУЛЯЦИЯ: ' + D.team(g[0]).short + ' ' + s.a + ':' + s.b + ' ' + D.team(g[1]).short;
+        afterRound(info);
         return;
       }
       const side = g[0] === c.club ? 0 : 1;
       const mine = careerSetupTeam();
       const extra = side === 0 ? { homeSetup: mine.setup } : { awaySetup: mine.setup };
-      launch(D.team(g[0]), D.team(g[1]), side, extra, (res, m) => {
-        completeRound(res.hs, res.as);
-        App.go(PF.PostMatchScreen(m, res, 'КАРЬЕРА · ТУР ' + car().round, () => App.go(careerHub(), 'replace')), 'replace');
+      extra.opts = { humanMul: 0.96 + c.morale / 100 * 0.08 }; // мораль: ±4% к статам
+      const go = () => launch(D.team(g[0]), D.team(g[1]), side, extra, (res, m) => {
+        const info = completeRound(res.hs, res.as, m);
+        const best = m.finalRatings().find((p) => p.team.human);
+        info.star = best ? best.name : '';
+        App.go(PF.PostMatchScreen(m, res, 'КАРЬЕРА · ТУР ' + car().round, () => afterRound(info)), 'replace');
       });
+      // каждый третий тур — предматчевая пресс-конференция
+      if (c.round % 3 === 1) {
+        const opp = D.team(g[0] === c.club ? g[1] : g[0]).name;
+        App.go(PF.Ceremony.press('pre', { opp }, (e) => {
+          c.morale = clamp100(c.morale + e.mo); c.board = clamp100(c.board + e.bo); c.fans = clamp100(c.fans + e.fa);
+          addNews(c, 'Перед матчем с ' + opp + ' тренер заявил: «' + e.quote + '»');
+          PF.Save.save();
+          App.pop();
+          go();
+        }));
+      } else go();
     }
     const menu = new UI.ListMenu([
       { label: 'ИГРАТЬ МАТЧ', action: () => { if (car().finished) newSeason(); else play(false); } },
       { label: 'СИМУЛИРОВАТЬ', action: () => { if (!car().finished) play(true); } },
       { label: 'СОСТАВ', action: () => { const m = careerSetupTeam(); App.go(PF.Menus.lineup(m.team, m.setup, (s) => { car().setup = s; car().squad = s.lineup.slice(); PF.Save.save(); })); } },
       { label: 'ТРАНСФЕРЫ', action: () => App.go(transfers()) },
+      { label: 'НОВОСТИ', action: () => App.go(newsScreen()) },
       { label: 'УВОЛИТЬСЯ', action: () => App.go(UI.confirm('Завершить карьеру? Сохранение карьеры будет удалено.', () => { SV().career = null; PF.Save.save(); App.go(PF.Menus.main(), 'reset'); })) },
     ]);
     function newSeason() {
       const c = car();
       const lg = Object.keys(c.table);
       c.season++; c.round = 0; c.finished = false; c.table = freshTable(lg); c.fixtures = makeFixtures(U.shuffle(lg.slice())); c.history = [];
-      // игроки растут/стареют
+      c.scorers = {}; c.pstats = {}; c.objective = seasonObjective(c); c.morale = clamp100(U.lerp(c.morale, 65, 0.5));
       c.news = 'НОВЫЙ СЕЗОН ' + c.season + '! БЮДЖЕТ ' + U.fmtCoins(c.budget);
+      addNews(c, 'Старт сезона ' + c.season + '. Цель руководства: ' + objText(c.objective) + '.');
       PF.Save.save();
     }
     function transfers() {
@@ -378,6 +548,7 @@
       enter() { PF.Audio.playMusic('menu'); },
       resume() { PF.Audio.playMusic('menu'); },
       update(dt) {
+        if (car()) careerDefaults(car());
         menu.items[0].label = car() && car().finished ? 'НОВЫЙ СЕЗОН' : 'ИГРАТЬ МАТЧ';
         menu.items[1].disabled = !!(car() && car().finished);
         menu.update(dt);
@@ -419,7 +590,13 @@
         F.draw(ctx, 'РЕЙТИНГ', 238, 44, COL.dim); F.draw(ctx, String(avg), 372, 44, COL.accent, 1, 2);
         F.draw(ctx, 'ФОРМА', 238, 54, COL.dim);
         c.history.slice(-5).forEach((h, i) => { const [x, y] = h.split(':').map(Number); ctx.fillStyle = x > y ? COL.accent : x === y ? COL.accent2 : COL.red; ctx.fillRect(310 + i * 12, 55, 9, 6); });
-        menu.render(ctx, 238, 70, 134, 13);
+        menu.render(ctx, 238, 66, 134, 11);
+        [['МОРАЛЬ', c.morale], ['РУКОВОДСТВО', c.board], ['БОЛЕЛЬЩИКИ', c.fans]].forEach(([n, v], i) => {
+          const y = 144 + i * 10;
+          F.draw(ctx, n, 238, y, COL.dim);
+          UI.bar(ctx, 314, y + 2, 58, v * 0.99, v >= 60 ? COL.accent : v >= 30 ? COL.accent2 : COL.red);
+        });
+        F.draw(ctx, 'ЦЕЛЬ: ' + objText(c.objective), 238, 175, c.finished ? (c.finalPos <= c.objective ? COL.accent : COL.red) : COL.accent2);
         UI.footer(ctx, [['J', 'ОК'], ['ESC', 'МЕНЮ']]);
       },
     };

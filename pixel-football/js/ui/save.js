@@ -4,7 +4,7 @@
   const KEY = 'pixel-league-27.save';
   const def = () => ({
     v: 1,
-    settings: { halfMin: 3, diff: 1, offside: true, cards: true, master: 0.8, music: 0.6, sfx: 0.8, fps: false, night: false },
+    settings: { manualPass: false, halfMin: 3, diff: 1, offside: true, cards: true, master: 0.8, music: 0.6, sfx: 0.8, fps: false, night: false },
     quick: { home: 'pp0', away: 'ls0', side: 0 },
     tactics: {},
     coins: PF.C.START_COINS,
