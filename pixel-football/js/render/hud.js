@@ -147,7 +147,7 @@
       return;
     }
     const t = sp.taker.team;
-    const hold = PF.Save.data.settings.manualPass ? '  (ДЕРЖИ = СИЛА)' : '';
+    const hold = PF.passHold() ? '  (ДЕРЖИ = СИЛА)' : '';
     let s;
     if (sp.type === 'penalty' || (sp.type === 'free' && m.isShootingFK(t, sp))) s = '▲▼ ПРИЦЕЛ  L (ДЕРЖАТЬ) - УДАР  J - ПАС';
     else if (sp.type === 'throw') s = 'J - КОРОТКИЙ   K - ДАЛЬНИЙ АУТ' + hold;

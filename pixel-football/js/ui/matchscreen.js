@@ -149,7 +149,7 @@
         { label: 'ТАКТИКА', disabled: !h, action: () => { P.page = 'tactics'; P.menu = tacticsMenu(); } },
         { label: 'СТАТИСТИКА', action: () => { P.page = 'stats'; P.menu = new UI.ListMenu([{ label: 'НАЗАД', action: back }]); } },
         { label: 'УПРАВЛЕНИЕ', action: () => { P.page = 'controls'; P.menu = new UI.ListMenu([{ label: 'НАЗАД', action: back }]); } },
-        { label: 'ПАС И НАВЕС', value: () => (st.manualPass ? 'РУЧНАЯ СИЛА' : 'АВТО'), left: () => { st.manualPass = !st.manualPass; PF.Save.save(); }, right: () => { st.manualPass = !st.manualPass; PF.Save.save(); } },
+        { label: 'ПАС И НАВЕС', value: () => (st.passMode === 'instant' ? 'МГНОВЕННО' : 'СИЛА'), left: () => { st.passMode = st.passMode === 'instant' ? 'hold' : 'instant'; PF.Save.save(); }, right: () => { st.passMode = st.passMode === 'instant' ? 'hold' : 'instant'; PF.Save.save(); } },
         { label: 'ГРОМКОСТЬ МУЗЫКИ', value: () => Math.round(st.music * 10) + '/10', left: () => vol('music', -0.1), right: () => vol('music', 0.1) },
         { label: 'ГРОМКОСТЬ ЗВУКОВ', value: () => Math.round(st.sfx * 10) + '/10', left: () => vol('sfx', -0.1), right: () => vol('sfx', 0.1) },
         { label: 'ВЫЙТИ ИЗ МАТЧА', action: () => App.go(UI.confirm('Выйти из матча? Результат не будет засчитан.', () => { scr.pause = null; App.go(PF.Menus.main(), 'reset'); })) },

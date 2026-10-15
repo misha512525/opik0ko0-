@@ -166,6 +166,26 @@
         ctx.fillStyle = '#140f1c'; ctx.fillRect(cx - 1, cy - 1, 3, 3);
       }
     }
+    // подсказка при заряде паса: кольцо под адресатом и точка, куда придёт мяч
+    const pv = m.preview;
+    if (pv && pv.from && pv.from.chAct && pv.from.charging && m.state === 'play') {
+      const col = BAR[pv.act] ? BAR[pv.act][1] : '#fff';
+      if (pv.q && !pv.q.off) {
+        const qx = Proj.sx(pv.q.rx, pv.q.ry) - ox, qy = Proj.sy(pv.q.ry, 0) - oy;
+        ctx.fillStyle = col;
+        for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; ctx.fillRect(Math.round(qx + Math.cos(a) * 7), Math.round(qy + Math.sin(a) * 3), 1, 1); }
+      }
+      const tx = Math.round(Proj.sx(pv.x, pv.y) - ox), ty = Math.round(Proj.sy(pv.y, 0) - oy);
+      const blink = ((rt * 8) | 0) & 1;
+      ctx.fillStyle = blink ? col : '#ffffff';
+      if (pv.act === 'lob') { for (let k = -2; k <= 2; k++) { ctx.fillRect(tx + k, ty + k, 1, 1); ctx.fillRect(tx + k, ty - k, 1, 1); } }
+      else { ctx.fillRect(tx - 1, ty, 3, 1); ctx.fillRect(tx, ty - 1, 1, 3); }
+      // пунктир от мяча к точке
+      const b = m.ball, bx = Proj.sx(b.rx, b.ry) - ox, by = Proj.sy(b.ry, 0) - oy;
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      const n = Math.min(14, Math.floor(Math.hypot(tx - bx, ty - by) / 8));
+      for (let k = 1; k < n; k++) ctx.fillRect(Math.round(bx + (tx - bx) * k / n), Math.round(by + (ty - by) * k / n), 1, 1);
+    }
     // прицел стандарта
     const sp = m.sp;
     if ((m.state === 'setpiece' || m.state === 'kickoff') && sp && sp.taker && sp.taker.team.human && sp.aimX != null) {

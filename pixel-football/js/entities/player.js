@@ -263,8 +263,9 @@
     shoot(power, aimY, aimZ, curve) {
       const b = this.m.ball;
       const gx = this.team.dir > 0 ? C.PITCH_L : 0;
-      const e = this.errFor(this.s.sho, 1.5 + Math.max(0, power - 0.85) * 3);
       const dist = Math.hypot(gx - b.x, aimY - b.y);
+      // издали точность падает: удар с 25 м заметно сложнее, чем с 10
+      const e = this.errFor(this.s.sho, (1.5 + Math.max(0, power - 0.85) * 3) * (0.72 + dist / 28));
       const v = (C.SHOT_MIN + (C.SHOT_MAX - C.SHOT_MIN) * power) * (0.8 + this.s.sho / 500);
       const ang = Math.atan2(aimY - b.y, gx - b.x) + U.gauss() * 0.11 * e;
       const t = dist / (v * 0.96);

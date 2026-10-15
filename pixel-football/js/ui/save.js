@@ -4,7 +4,7 @@
   const KEY = 'pixel-league-27.save';
   const def = () => ({
     v: 1,
-    settings: { manualPass: false, halfMin: 3, diff: 1, offside: true, cards: true, master: 0.8, music: 0.6, sfx: 0.8, fps: false, night: false },
+    settings: { passMode: 'hold', halfMin: 3, diff: 1, offside: true, cards: true, master: 0.8, music: 0.6, sfx: 0.8, fps: false, night: false },
     quick: { home: 'pp0', away: 'ls0', side: 0 },
     tactics: {},
     coins: PF.C.START_COINS,
@@ -45,4 +45,6 @@
     },
   };
   PF.Save = S;
+  // Пас/навес/пас на ход: 'hold' — короткое нажатие = автопас, удержание = сила; 'instant' — сразу по нажатию
+  PF.passHold = () => !S.data || S.data.settings.passMode !== 'instant';
 })(window.PF);

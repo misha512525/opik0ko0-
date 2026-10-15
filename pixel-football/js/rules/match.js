@@ -183,64 +183,70 @@
       return best;
     }
 
-    // Действие человека с мячом
-    // power: null — короткое нажатие (сила подбирается автоматически), 0..1 — заряженная шкала
-    humanAction(p, act, ix, iy, power) {
+    // План действия человека: кому и куда уйдёт мяч при данной силе.
+    // power: null — короткое нажатие (сила подбирается автоматически), 0..1 — заряженная шкала.
+    // Тот же план рисуется как подсказка, пока игрок держит кнопку.
+    planAction(p, act, ix, iy, power) {
       const t = p.team;
       const auto = power == null;
       const pw = auto ? 0.35 : power;
+      const hasDir = Math.hypot(ix, iy) > 0.3;
+      const dirA = hasDir ? Math.atan2(iy, ix) : p.facing;
       const crossZone = AI.ax(t, p.x) > C.CROSS_ZONE_X && Math.abs(p.y - MY) > 11;
-      const freeDir = () => (Math.hypot(ix, iy) > 0.3 ? Math.atan2(iy, ix) : p.facing);
+      const plan = { act, q: null, x: 0, y: 0, z: 0, arrive: 0, type: act, cross: false };
       if (act === 'pass') {
-        const q = this.passTarget(p, ix, iy, false, auto ? null : 5 + pw * 38);
+        plan.q = this.passTarget(p, ix, iy, false, auto ? null : 5 + pw * 38);
         // сильнее пас — быстрее мяч приходит к партнёру
-        const arrive = auto ? C.PASS_ARRIVE : U.lerp(4, 14, pw);
-        if (q) { p.passTo(this.passLead.x, this.passLead.y, arrive, 'pass', q); this.setControlled(t, q); }
-        else { const a = freeDir(), d = 8 + pw * 35; p.passTo(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d, 4, 'pass'); }
+        plan.arrive = auto ? C.PASS_ARRIVE : U.lerp(7, 19, pw);
+        if (plan.q) { plan.x = this.passLead.x; plan.y = this.passLead.y; }
+        else { const d = 8 + pw * 35; plan.x = p.x + Math.cos(dirA) * d; plan.y = p.y + Math.sin(dirA) * d; plan.arrive = 6; }
       } else if (act === 'lob') {
-        if (crossZone && Math.hypot(ix, iy) < 0.5) {
+        if (crossZone && !hasDir) {
           // навес в штрафную: без заряда — на сильного в воздухе, с зарядом — сила выбирает ближнюю/дальнюю штангу
-          let best = null, bs = -1e9;
+          plan.cross = true; plan.type = 'cross'; plan.z = 1.5;
+          let bs = -1e9;
           const pref = 10 + pw * 30;
           for (const q of t.players) {
             if (q === p || q.off || q.isGK) continue;
             if (!this.inBox(q.x, q.y, this.teams[1 - t.idx], 2)) continue;
-            const s = auto ? q.s.phy + Math.random() * 20 : -Math.abs(Math.hypot(q.x - p.x, q.y - p.y) - pref);
-            if (s > bs) { bs = s; best = q; }
+            const s = auto ? q.s.phy + q.s.sho * 0.3 : -Math.abs(Math.hypot(q.x - p.x, q.y - p.y) - pref);
+            if (s > bs) { bs = s; plan.q = q; }
           }
-          let tx, ty;
-          if (best) { tx = best.x; ty = best.y; }
-          else { // в зону: глубина подачи по силе
-            const gx = t.dir > 0 ? L - 8 : 8;
-            ty = U.lerp(p.y, W - p.y, U.clamp(0.25 + pw * 0.6, 0, 1)); tx = gx;
-          }
-          p.lobTo(tx, ty, 1.5, 'cross', best);
-          if (best) this.setControlled(t, best);
+          if (plan.q) { plan.x = plan.q.x + plan.q.vx * 0.6; plan.y = plan.q.y + plan.q.vy * 0.6; }
+          else { plan.x = t.dir > 0 ? L - 8 : 8; plan.y = U.lerp(p.y, W - p.y, U.clamp(0.25 + pw * 0.6, 0, 1)); }
         } else {
-          const q = this.passTarget(p, ix, iy, true, auto ? null : 14 + pw * 42);
-          if (q) { p.lobTo(this.passLead.x, this.passLead.y, 0, 'lob', q); this.setControlled(t, q); }
-          else { const a = freeDir(), d = 15 + pw * 45; p.lobTo(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d, 0, 'lob'); }
+          plan.q = this.passTarget(p, ix, iy, true, auto ? null : 14 + pw * 42);
+          if (plan.q) { plan.x = this.passLead.x; plan.y = this.passLead.y; }
+          else { const d = 15 + pw * 45; plan.x = p.x + Math.cos(dirA) * d; plan.y = p.y + Math.sin(dirA) * d; }
         }
       } else if (act === 'through') {
-        const q = this.passTarget(p, ix, iy, false, auto ? null : 8 + pw * 30);
+        const q = plan.q = this.passTarget(p, ix, iy, false, auto ? null : 8 + pw * 30);
+        // сила паса на ход — насколько далеко вперёд забрасываем мяч
+        plan.arrive = auto ? 11 : U.lerp(8, 15, pw);
         if (q) {
-          // сила паса на ход — насколько далеко вперёд забрасываем мяч
           const lead = auto ? 7 + q.s.spd / 25 : 3 + pw * 16;
-          const gx = t.dir > 0 ? L : 0;
           let dx = t.dir, dy = (MY - q.y) * 0.015;
-          if (Math.hypot(ix, iy) > 0.3) { dx = ix; dy = iy; }
+          if (hasDir) { dx = ix; dy = iy; }
           const dl = Math.hypot(dx, dy) || 1;
-          let tx = q.x + dx / dl * lead, ty = q.y + dy / dl * lead;
-          tx = t.dir > 0 ? Math.min(tx, gx - 3) : Math.max(tx, gx + 3); ty = U.clamp(ty, 2, W - 2);
-          p.passTo(tx, ty, auto ? 11 : U.lerp(8, 14, pw), 'through', q);
-          q.runT = 2.2; q.runX = tx; q.runY = ty;
-          this.setControlled(t, q);
-        }
-      } else if (act === 'shoot') {
-        this.humanShoot(p, Math.max(0.25, pw), ix, iy);
+          plan.x = q.x + dx / dl * lead; plan.y = q.y + dy / dl * lead;
+        } else { const d = 12 + pw * 25; plan.x = p.x + Math.cos(dirA) * d; plan.y = p.y + Math.sin(dirA) * d; }
+        const gx = t.dir > 0 ? L : 0;
+        plan.x = t.dir > 0 ? Math.min(plan.x, gx - 3) : Math.max(plan.x, gx + 3); plan.y = U.clamp(plan.y, 2, W - 2);
       }
+      plan.x = U.clamp(plan.x, -1, L + 1); plan.y = U.clamp(plan.y, 0.5, W - 0.5);
+      return plan;
     }
-
+    humanAction(p, act, ix, iy, power) {
+      const t = p.team;
+      this.preview = null;
+      if (act === 'shoot') { this.humanShoot(p, Math.max(0.25, power == null ? 0.35 : power), ix, iy); return; }
+      const pl = this.planAction(p, act, ix, iy, power);
+      const q = pl.q;
+      if (act === 'pass') p.passTo(pl.x, pl.y, pl.arrive, 'pass', q);
+      else if (act === 'lob') p.lobTo(pl.x, pl.y, pl.z, pl.type, q);
+      else if (act === 'through') { p.passTo(pl.x, pl.y, pl.arrive, 'through', q); if (q) { q.runT = 2.2; q.runX = pl.x; q.runY = pl.y; } }
+      if (q) this.setControlled(t, q);
+    }
     // Заряд действия человека: нажал — копится сила, отпустил (или шкала полная) — исполняем.
     // exec(p, act, ix, iy, power); power = null при коротком нажатии (кроме удара)
     chargeAction(p, dt, ax, exec) {
@@ -248,8 +254,8 @@
       if (!p.chAct) {
         for (const a of CHARGE_ACTS) if (I.pressed(a)) { p.chAct = a; p.charge = 0; p.chT = 0; break; }
         if (!p.chAct) return false;
-        // режим «авто»: пас, навес и пас на ход — с одного нажатия, сила подбирается сама
-        if (p.chAct !== 'shoot' && !PF.Save.data.settings.manualPass) {
+        // режим «мгновенно»: пас, навес и пас на ход — сразу по нажатию, сила подбирается сама
+        if (p.chAct !== 'shoot' && !PF.passHold()) {
           const act = p.chAct; p.chAct = null; p.charging = false; p.charge = 0;
           exec(p, act, ax.x, ax.y, null);
           return true;
@@ -258,7 +264,12 @@
       p.charging = true;
       p.chT += dt;
       p.charge = Math.min(1.1, p.charge + dt / C.CHARGE_TIME[p.chAct]);
+      // подсказка: кому и куда уйдёт мяч при текущей силе
+      if (p.chAct !== 'shoot' && p.chT >= C.TAP_TIME && p.team.human && !p.isGK && this.state === 'play') {
+        if (!this.preview || (this.t - this.previewT) > 0.08) { this.preview = this.planAction(p, p.chAct, ax.x, ax.y, Math.min(1, p.charge)); this.preview.from = p; this.previewT = this.t; }
+      }
       if (I.down(p.chAct) && p.charge < 1.1) return true;
+      this.preview = null;
       const act = p.chAct;
       const power = p.chT < C.TAP_TIME && act !== 'shoot' ? null : Math.min(1, p.charge);
       p.chAct = null; p.charging = false; p.charge = 0;
@@ -362,7 +373,7 @@
           p.buffer = a; p.bufferT = C.ACTION_BUFFER; p.charge = 0; p.chT = 0;
           if (a === 'pass' && !b.owner && p.icT > 1.2) { const c = this.switchCandidate(t, ax.x, ax.y); if (c) { this.setControlled(t, c); c.buffer = a; c.bufferT = C.ACTION_BUFFER; c.charge = 0; c.chT = 0; p = c; } }
         }
-        if (p.buffer && I.down(p.buffer) && (p.buffer === 'shoot' || PF.Save.data.settings.manualPass)) {
+        if (p.buffer && I.down(p.buffer) && (p.buffer === 'shoot' || PF.passHold())) {
           p.charge = Math.min(1, p.charge + dt / C.CHARGE_TIME[p.buffer]); p.chT += dt;
           p.bufferT = Math.max(p.bufferT, 0.15);
         }
@@ -390,7 +401,7 @@
       const a = PF.Input.axis();
       const act = p.buffer; p.buffer = null;
       // кнопка ещё зажата — продолжаем копить силу уже с мячом, удар/пас по отпусканию
-      const manual = act === 'shoot' || PF.Save.data.settings.manualPass;
+      const manual = act === 'shoot' || PF.passHold();
       if (manual && PF.Input.down(act)) { p.chAct = act; p.charging = true; return false; }
       const power = p.chT < C.TAP_TIME && act !== 'shoot' ? null : Math.max(act === 'shoot' ? 0.35 : 0, Math.min(1, p.charge));
       p.charge = 0; p.charging = false;
@@ -472,7 +483,9 @@
       const pt = b.owner ? b.owner.team.idx : this.possTeam;
       if (pt >= 0) this.teams[pt].stats.poss += dt;
       // камера следит за мячом с упреждением
-      this.cam.x = b.x + b.vx * C.CAM_LEAD; this.cam.y = b.y + b.vy * C.CAM_LEAD; this.cam.z = b.z; this.cam.zoom = 1; this.cam.rate = C.CAM_SMOOTH;
+      // плюс плавный сдвиг в сторону атаки владеющей команды: видно, куда отдавать
+      this.camLook = U.lerp(this.camLook || 0, pt >= 0 ? this.teams[pt].dir * 7 : 0, U.smooth(dt, 0.9));
+      this.cam.x = b.x + b.vx * C.CAM_LEAD + this.camLook; this.cam.y = b.y + b.vy * C.CAM_LEAD; this.cam.z = b.z; this.cam.zoom = 1; this.cam.rate = C.CAM_SMOOTH;
       // накал у ворот
       if (b.kickType === 'shot' && b.kickT < 0.1) PF.Audio.crowdExcite(0.35);
       // тренировки
@@ -741,6 +754,12 @@
         p.st.passes++; t.stats.passes++;
         this.lastPass = { from: p, team: t, t: this.t };
         if (type === 'through' && Math.random() < 0.35) Comm.say('through', { player: p.name });
+        // «стенка»: отдав пас в середине поля, игрок ИИ открывается вперёд под возврат
+        const pa = AI.ax(t, p.x);
+        if (type === 'pass' && !p.isGK && !(t.human && p.controlled) && pa > 35 && pa < 85 && Math.random() < 0.45) {
+          const off = t.ctx.offLine || L / 2;
+          p.runT = 1.3; p.runX = AI.wx(t, Math.min(pa + 11, off - 0.6)); p.runY = U.lerp(p.y, MY, 0.3);
+        }
         if (type === 'cross') Comm.say('cross', { player: p.name });
       }
       if (type === 'shot') this.registerShot(p);

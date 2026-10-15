@@ -13,7 +13,7 @@
   const wx = ax, wy = ay; // преобразование симметрично
 
   const AI = {};
-  AI.ax = ax; AI.ay = ay;
+  AI.ax = ax; AI.ay = ay; AI.wx = wx; AI.wy = wy;
 
   // Ценность позиции для атаки (чем ближе к центру чужих ворот — тем выше)
   function posValue(t, x, y) {
@@ -46,6 +46,7 @@
     const b = m.ball, opp = m.teams[1 - t.idx];
     const ctx = t.ctx;
     ctx.inPoss = m.possTeam === t.idx;
+    if (!ctx.inPoss) for (const p of t.players) { p.runT = 0; p.boxRun = false; }
     ctx.bx = ax(t, b.x); ctx.by = ay(t, b.y);
     // линия офсайда соперника: второй с конца игрок соперника (в наших атакующих координатах)
     let a1 = 0, a2 = 0;
@@ -152,11 +153,12 @@
       sprint = true; urgent = true;
       p.faceX = b.x; p.faceY = b.y;
       AI.defendActions(m, t, p, dt, pressCall ? 1 : t.human ? 0.75 : 1);
-    } else if (!ctx.inPoss && !loose && ctx.press2 === p && ctx.pressD2 < 16 * t.tac.press * diff.press) {
-      // второй игрок страхует: между мячом и воротами
+    } else if (!ctx.inPoss && !loose && ctx.press2 === p && (ctx.pressD2 < 16 * t.tac.press * diff.press || ctx.bx < 35)) {
+      // второй игрок страхует: между мячом и воротами; в своей трети — перекрывает линию удара
       const c = b.owner, gx = t.dir > 0 ? 0 : L;
       const dx = gx - c.x, dy = MY - c.y, d = Math.hypot(dx, dy) || 1;
-      tgtX = c.x + dx / d * 4.5; tgtY = c.y + dy / d * 4.5;
+      const k = ctx.bx < 35 ? U.clamp(d * 0.3, 2.2, 4.5) : 4.5;
+      tgtX = c.x + dx / d * k; tgtY = c.y + dy / d * k;
       sprint = Math.hypot(tgtX - p.x, tgtY - p.y) > 6;
       p.faceX = b.x; p.faceY = b.y;
       AI.defendActions(m, t, p, dt, 0.35);
@@ -440,7 +442,7 @@
       p.holdT += dt;
       p.faceX = t.dir > 0 ? L : 0; p.faceY = MY;
       p.ix = 0; p.iy = 0;
-      const wait = t.human && p.controlled ? 4.5 : C.GK_HOLD_TIME + Math.random() * 0.4;
+      const wait = t.human && p.controlled ? 4.5 : !m.inOwnBox(p, 0.5) ? 0.35 : C.GK_HOLD_TIME + Math.random() * 0.4;
       if (p.holdT > wait) gkDistribute(m, t, p);
       return;
     }
@@ -470,6 +472,12 @@
     const inBox = m.inBox(b.x, b.y, t, 0.5);
     const opp = m.teams[1 - t.idx];
     if (!b.owner && inBox && (p.icT < opp.ctx.chaseT - 0.15 || p.icT < 0.35)) {
+      const i = p.icI;
+      moveTo(p, PX[i], PY[i], true, true);
+      return;
+    }
+    // мяч за спину защитникам: вратарь выходит из ворот, если явно успевает первым
+    if (!b.owner && b.z < 1 && Math.hypot(b.x - gx, b.y - MY) < 22 && p.icT < 1.8 && p.icT < opp.ctx.chaseT - 0.6 && p.icT < t.ctx.chaseT - 0.2) {
       const i = p.icI;
       moveTo(p, PX[i], PY[i], true, true);
       return;
@@ -583,9 +591,28 @@
       if (s1) s1.support = 1;
       if (s2) s2.support = 2;
       // забегания за спину
-      const ca = ax(t, c.x);
+      const ca = ax(t, c.x), cb = ay(t, c.y);
+      // навес с фланга: ближняя штанга, дальняя штанга, точка пенальти
+      if (ca > C.CROSS_ZONE_X - 4 && Math.abs(cb - MY) > 12) {
+        const side = cb < MY ? -1 : 1;
+        const spots = [[L - 6, MY + side * 3], [L - 7, MY - side * 5], [L - 12, MY - side * 1]];
+        const cand = t.players.filter((p) => p !== c && !p.off && !p.isGK && t.slots[p.slot].role !== 'DEF')
+          .sort((p1, p2) => ax(t, p2.x) - ax(t, p1.x)).slice(0, 3);
+        for (const sp of spots) {
+          let best = null, bd = 1e9;
+          for (const p of cand) {
+            if (p.boxRun) continue;
+            const d = Math.hypot(ax(t, p.x) - sp[0], ay(t, p.y) - sp[1]);
+            if (d < bd) { bd = d; best = p; }
+          }
+          if (!best) break;
+          best.boxRun = true; best.support = 0;
+          best.runT = 0.35; // обновляется каждый пересчёт ролей, пока мяч на фланге
+          best.runX = wx(t, Math.min(sp[0], ctx.offLine - 0.3)); best.runY = wy(t, sp[1]);
+        }
+      } else for (const p of t.players) p.boxRun = false;
       for (const p of t.players) {
-        if (p === c || p.off || p.isGK || p.runT > 0 || p.support) continue;
+        if (p === c || p.off || p.isGK || p.runT > 0 || p.support || p.boxRun) continue;
         const f = t.slots[p.slot];
         if (f.role === 'DEF' && f.tag !== 'FB') continue;
         const pa = ax(t, p.x);
